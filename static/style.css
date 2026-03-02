@@ -1,0 +1,399 @@
+body {
+    margin: 0;
+    background: #eef3f7;
+    font-family: "Playfair Display", serif;
+}
+
+.heading {
+    background: linear-gradient(to right, #003366, #00e6c3);
+    padding: 25px 40px;
+    color: rgb(0, 0, 0);
+
+    display: flex;
+    flex-direction: column; 
+    align-items: flex-start; 
+    gap: 5px; 
+    height: 150px;
+}
+
+
+.heading h1 {
+    margin: 0;
+    font-size: 26px;
+    font-weight: 800;
+    justify-self: start;
+}
+
+.heading h3 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 500;
+    text-align: center;
+    justify-self: center;
+}
+
+.heading p {
+    margin: 0;
+    text-align: right;
+    font-size: 14px;
+    opacity: 0.9;
+    justify-self: end;
+}
+
+.buttons {
+    margin: 30px auto;
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+   
+    padding: 10px; /* Added padding to frame the buttons */
+    border-radius:10px;
+
+}
+
+.button-link {
+    /* Required to remove underline and allow sizing */
+    text-decoration: none;
+    display: inline-block;
+
+    border-radius: 5px;
+    color: black;
+    font-size: 16px;
+    font-weight:300;
+    text-align: center;
+    background-color: #2ED4B8; /* Darker background for container */
+    height: 25px;
+    width: 100px;
+    cursor: pointer;
+    border: none;
+    padding: 2px;
+}
+
+/* .button-link:hover {
+    scale: unset;
+} */
+.summary_container {
+    display: flex;
+    justify-content: center;
+    gap: 50px;
+    margin-top: 10px;
+    background-color: #003366;
+    padding: 20px;
+    height: 250px;
+    max-width: 1020px;
+    justify-content: center;
+    margin: 0 auto;
+    margin-top: 30px;
+    padding: 10px;
+    border-radius: 30px;
+}
+
+.cards {
+    width: 230px;
+    max-height: 240px;
+    background: #ffffff;
+    border-radius: 15px;
+    color: rgb(0, 0, 0);
+    font-size: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    box-sizing: border-box;
+    padding-top: 20px;
+    box-shadow: 0px 4px 8px rgba(0,0,0,0.25);
+}
+
+
+.charts-container {
+    width: 90%;
+    margin: 40px auto;
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 20px;
+    padding: 30px;
+    justify-content: space-between;
+}
+
+.line-chart,
+.pie-chart {
+    background: #d9d9d9;
+    border-radius: 6px;
+    padding: 20px;
+    height: 330px;
+    box-shadow: inset 0 0 4px rgba(0,0,0,0.25);
+    font-size: 18px;
+}
+/* ---------- DROPDOWN (integrated & accessible) ---------- */
+#pp {
+    padding-bottom: 25px;
+}
+
+.btn-panel {
+    display: inline-flex;
+}
+
+
+.dropdown {
+    position: relative;
+    display: inline-block;
+    width: 220px;
+    font-family: inherit;
+    background-color: #a3a7a8;
+    border-radius: 5px;
+}
+
+.dropdown__button {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: none;
+    cursor: pointer;
+    font-size: 14px;
+    text-align: left;
+}
+/* .transaction-panel-btn {
+    display: flex;
+} */
+
+.dropdown__arrow {
+    width: 14px;
+    height: 14px;
+    transition: transform 160ms ease;
+    flex-shrink: 0;
+}
+
+.dropdown.open .dropdown__arrow {
+    transform: rotate(180deg);
+}
+
+.dropdown__list {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    width: 100%;
+    margin: 0;
+    padding: 6px;
+    list-style: none;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    box-shadow: var(--shadow);
+    max-height: 220px;
+    overflow: auto;
+    transform-origin: top;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-6px) scale(0.98);
+    transition: opacity 150ms ease, transform 150ms ease, visibility 150ms;
+    z-index: 100;
+    /* background-color: #ececec; */
+}
+
+.dropdown.open .dropdown__list {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0) scale(1);
+}
+
+.dropdown__option {
+    padding: 8px 10px;
+    margin: 2px 0;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.dropdown__option[aria-selected="true"] {
+    font-weight: 600;
+    color: var(--accent);
+}
+
+.dropdown__option:hover,
+.dropdown__option:focus {
+    background: #2ED4B8;
+    outline: none;
+}
+
+#pp {
+    padding-bottom: 25px;
+}
+
+.buttons {
+    margin: auto;
+}
+
+/* ---------- MAIN ---------- */
+.main-box {
+    width: 900px;
+    margin: 20px auto;
+    background: var(--card);
+    padding: 20px;
+    border-radius: 12px;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 6px 20px rgba(12,18,26,0.03);
+}
+
+.top-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    flex-wrap:wrap;
+}
+
+.btn-row button {
+  padding: 8px 14px;
+  background-color: #00e6c3;
+  color: rgb(8, 0, 0);
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+
+  /* Rendering hints */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: geometricPrecision;
+
+  /* Force composite layer */
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  will-change: transform;
+}
+
+.btn-row button:hover {
+  transform: scale(1.04) translateZ(0);
+  font-weight: 600; /* explicit */
+}
+
+
+.btn-row button {
+    font-weight: 600;
+    -webkit-font-smoothing: antialiased;
+    font-smooth: always;
+}
+
+.table-area {
+    margin-top: 20px;
+    max-height: 450px;
+    overflow-y: auto;
+}
+
+/* To get rounded corners on table, keep border-collapse separate and use wrapper overflow:hidden */
+.table-wrap {
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid #d1d5db;
+    background: white;
+}
+
+table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    text-align: center;
+    font-family: inherit;
+}
+
+thead th {
+    background: #fbfbff;
+    padding: 12px;
+    font-weight: 600;
+    border-bottom: 1px solid #e6e9ef;
+}
+
+tbody td {
+    padding: 12px;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+tbody tr:last-child td { border-bottom: 0; }
+
+/* small helper */
+.hint { margin-top: 12px; font-size: 13px; color: var(--muted); }
+
+/* responsive */
+@media (max-width: 960px) {
+    .main-box { width: calc(100% - 32px); margin: 16px; }
+    .dropdown { width: 180px; }
+}
+
+/* -------------------ACCOUNTS----------------- */
+.btn-array-acc {
+    display: flex;
+    margin: 2px;
+    padding: 5px;
+}
+
+.button-acc {
+    background-color: #a3a7a8;
+    font-size: 12px;
+    font-weight: 300;
+    margin: 20px;
+    padding-left: 15px;
+    padding-right: 15px;
+    padding-top: 9px;
+    padding-bottom: 9px;
+    border-radius: 10px;
+}
+
+.card-container {
+    display: flex;
+    margin: 0px auto;
+    justify-content: center;
+    /* background-color: #a3a7a8; */
+    padding: 20px;
+}
+
+.acc-card {
+    background-color: #a3a7a8;
+    margin: 20px;
+    height: 360px;
+    width: 360px;
+    text-align:center;
+    font-weight: 400;
+    padding: 20px;
+    font-size: larger;
+    border-radius: 15px;
+    box-shadow:black;
+    
+}
+
+.line-chart {
+    max-width: 850px;
+    height: 500px;
+    margin: 0 auto;
+    text-align: center;
+    font-size: 30px;
+    margin-bottom: 40px;
+}
+
+.dropdown__list {
+  display: none;
+}
+
+.dropdown__list.show {
+  display: block;
+}
+
+/* Expense styling */
+tr[data-type="expense"] .amount-cell {
+  color: #b00020;              /* strong red text */
+  background-color: #ffe6e9;   /* faint red background */
+  font-weight: 600;
+  border-radius: 6px;
+}
+
+/* Income styling */
+tr[data-type="income"] .amount-cell {
+  color: #0a7d35;              /* strong green text */
+  background-color: #e6f7ec;   /* faint green background */
+  font-weight: 600;
+  border-radius: 6px;
+}

@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+{% load static %}
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="stylesheet" href="{% static 'style.css' %}"> 
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <!-- <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap" rel="stylesheet">  -->
+        <title>Personal finance</title>
+    </head>
+
+    <body>
+        <header class="heading">
+            
+            <div class="left">
+                <h1 id="home_title">Personal finance tracker</h1>
+                <h3>Welcome back varchasva</h3>
+                <p id="pp">This is your financial report</p>
+            </div>
+            <div class="panel-btn">
+                <div class="buttons">
+                    <a href="{% url 'home' %}" class="button-link">Overview</a>
+                    <a href="{% url 'accounts' %}" class="button-link">Accounts</a>
+                    <a href="{% url 'transaction' %}" class="button-link">transactions</a>
+
+                    <!-- <a href="settings.html" class="button-link" id="Settings">Settings</a> -->
+                </div>
+            </div>
+        </header>
+        <main>
+            <div class="summary_container">
+                <div class="cards">
+                    <b>Remaining</b>
+                </div>
+                <div class="cards">
+                    <b>Income</b>
+                </div>
+                <div class="cards">
+                    <b>Expenses</b>
+                </div>
+            </div>
+            <div class="charts-container">
+                <div class="line-chart">Line chart</div>
+                <div class="pie-chart">Pie chart</div>
+
+            </div>
+
+        </main>
+
+    </body>
+
+</html>
