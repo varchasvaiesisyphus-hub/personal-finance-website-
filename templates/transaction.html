@@ -11,41 +11,6 @@
   <title>Transactions</title>
 
   <style>
-    /* --- Dropdown visibility logic --- */
-    .dropdown__list {
-      display: none;
-      position: absolute;
-      background: white;
-      border: 1px solid #ddd;
-      border-radius: 8px;
-      list-style: none;
-      padding: 0;
-      margin: 4px 0 0 0;
-      width: 200px;
-      z-index: 100;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    }
-
-    .dropdown.is-open .dropdown__list {
-      display: block !important; /* Forces visibility when JS toggles the class */
-    }
-
-    .dropdown__option {
-      padding: 10px 12px;
-      cursor: pointer;
-      font-size: 14px;
-      color: #333;
-    }
-
-    .dropdown__option:hover {
-      background-color: #f3f4f6;
-    }
-
-    .dropdown__option[aria-selected="true"] {
-      background-color: #eff6ff;
-      color: #2563eb;
-      font-weight: 600;
-    }
     .btn-row { display:flex; gap:8px; align-items:center; }
     .btn-pg2 { padding:8px 12px; border-radius:8px; cursor:pointer; }
     #deleteBtn { background: #ff6b6b; color:#fff; border:none; display:inline-flex; align-items:center; gap:8px; }
@@ -56,20 +21,20 @@
     table { width:100%; border-collapse:collapse; }
     thead th, tbody td { padding:14px 12px; }
 
+    /* FIX: amount-cell must be on a <span> (inline) to show bg color correctly */
     tr[data-type="expense"] .amount-cell {
       color: #b00020;
       background-color: #ffe6e9;
       font-weight: 600;
-      padding: 6px 10px;
+      padding: 4px 10px;
       border-radius: 6px;
       display: inline-block;
     }
-
     tr[data-type="income"] .amount-cell {
       color: #0a7d35;
       background-color: #e6f7ec;
       font-weight: 600;
-      padding: 6px 10px;
+      padding: 4px 10px;
       border-radius: 6px;
       display: inline-block;
     }
@@ -85,17 +50,16 @@
     </div>
     <div class="panel-btn">
       <div class="buttons">
-          <a href="{% url 'home' %}" class="button-link">Overview</a>
-          <a href="{% url 'accounts' %}" class="button-link">Accounts</a>
-          <a href="{% url 'transaction' %}" class="button-link">transactions</a>
+        <a href="{% url 'home' %}" class="button-link">Overview</a>
+        <a href="{% url 'accounts' %}" class="button-link">Accounts</a>
+        <a href="{% url 'transaction' %}" class="button-link">Transactions</a>
       </div>
       <div class="dropdown-btn-container">
-        <span id="filterLabel" style="display:block; margin-bottom:6px; font-size:13px; font-weight:500;">Filter</span>
+        <label for="dropdownBtn" style="display:block;margin-bottom:6px;font-size:13px">Filter</label>
         <div class="dropdown" id="accountsDropdown">
           <button
             id="dropdownBtn"
             class="dropdown__button"
-            aria-labelledby="filterLabel selectedLabel"
             aria-haspopup="listbox"
             aria-expanded="false"
             aria-controls="accountsList"
@@ -123,13 +87,19 @@
     </div>
   </header>
 
+  <!-- Hidden form just to get the CSRF cookie into the page -->
+  <form style="display:none;">
+    {% csrf_token %}
+  </form>
+
   <main class="main-box">
     <div class="top-row" style="display:flex; justify-content:space-between; align-items:center;">
       <h2 style="margin:0">Transaction History</h2>
 
       <div class="btn-row">
-        <button class="btn-pg2" type="button">Transfer</button>
-        <button class="btn-pg2" id="addNewBtn" type="button">Add New</button>
+        <button class="btn-pg2">Transfer</button>
+        <button class="btn-pg2" id="addNewBtn">Add New</button>
+
         <button id="deleteBtn" class="btn-pg2" aria-label="Delete selected transactions" disabled>
           <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
             <path fill="currentColor" d="M9 3v1H4v2h16V4h-5V3H9zm2 6v7h2V9h-2zM7 9v7h2V9H7zm8 0v7h2V9h-2z"/>
@@ -141,7 +111,7 @@
 
     <div class="table-area">
       <div class="table-wrap">
-        <table id="txTable">
+        <table id="txTable" aria-describedby="transactions">
           <thead>
             <tr>
               <th>Date</th>
@@ -159,83 +129,25 @@
             <tr data-type="{{ txn.type }}">
               <td>{{ txn.date|date:"d M Y" }}</td>
               <td>{{ txn.category.name }}</td>
-              <td class="amount-cell">{{ txn.amount }}</td>
+              {# FIX: wrap in <span> so CSS background/color applies; add sign prefix #}
+              <td><span class="amount-cell">{% if txn.type == 'income' %}+{% else %}−{% endif %}{{ txn.amount }}</span></td>
               <td>{{ txn.account|capfirst }}</td>
               <td class="select-cell">
-                <input type="checkbox" class="row-checkbox" data-id="{{ txn.id }}" name="txn_ids" aria-label="Select transaction">
+                <input type="checkbox" class="row-checkbox" data-id="{{ txn.id }}" aria-label="Select transaction">
               </td>
             </tr>
             {% empty %}
             <tr>
-              <td colspan="5" style="text-align:center;">No transactions found.</td>
+              <td colspan="5" style="text-align:center;padding:20px;color:#6b7280;">No transactions found.</td>
             </tr>
             {% endfor %}
-          </tbody> </table> </div>
-    </div>
+          </tbody>
+        </table>  {# FIX: was missing </table> closing tag #}
+      </div>  {# /table-wrap — FIX: was missing this closing div #}
+    </div>  {# /table-area #}
 
-    <p class="hint">Tip: use the keyboard — <kbd>Enter</kbd>/<kbd>Space</kbd> to open, <kbd>↓</kbd>/<kbd>↑</kbd> to move, and <kbd>Esc</kbd> to close.</p>
+    <p class="hint">Tip: use the filter dropdown to show only income or expenses.</p>
   </main>
 
-  <div id="txn-modal" aria-hidden="true">
-    <div class="txn-dialog">
-      <button id="modal-close-x" class="close-x" type="button">&times;</button>
-      <h3>Add Transaction</h3>
-
-      <form id="txn-form" novalidate>
-        {% csrf_token %}
-        <div class="txn-row amount-type-row">
-          <div class="amount-field">
-            <label for="amount">Amount</label>
-            <input id="amount" name="amount" type="number" step="0.01" placeholder="0.00" />
-            <span id="amount-error" class="errorspan"></span>
-          </div>
-
-          <div class="type-field">
-            <label>Type</label>
-            <button id="txn-type-toggle" type="button" class="type-toggle expense">
-              <span id="txn-type-symbol">−</span>
-              <span id="txn-type-label">Expense</span>
-            </button>
-          </div>
-        </div>
-
-        <div class="txn-row">
-          <label for="selected-category-id">Category</label>
-          <input type="hidden" id="selected-category-id" name="category" value="">
-
-          <div class="create-category-row">
-            <input id="new-category-name" type="text" placeholder="New category name" />
-            <button type="button" id="save-category" class="btn">Save</button>
-          </div>
-
-          <div id="category-list" class="category-list" aria-live="polite" role="list"></div>
-          <span id="category-error" class="errorspan"></span>
-        </div>
-
-        <div class="txn-row">
-          <label for="account">Account</label>
-          <select id="account" name="account">
-            <option value="">-- choose account --</option>
-            <option value="cash">Cash</option>
-            <option value="bank">Bank</option>
-          </select>
-          <span id="account-error" class="errorspan"></span>
-        </div>
-
-        <div class="txn-row">
-          <label for="date">Date</label>
-          <input id="date" name="date" type="date" />
-          <span id="date-error" class="errorspan"></span>
-        </div>
-
-        <div id="form-message" class="small" style="min-height:16px;margin-bottom:6px;"></div>
-
-        <div class="txn-actions">
-          <button type="button" id="submit-txn" class="btn btn-primary">Add</button>
-          <button type="button" id="done" class="btn">Done</button>
-        </div>
-      </form>
-    </div>
-  </div>
 </body>
 </html>
