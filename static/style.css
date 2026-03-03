@@ -397,3 +397,110 @@ tr[data-type="income"] .amount-cell {
   font-weight: 600;
   border-radius: 6px;
 }
+
+/* --- Modal Overlay & Dialog --- */
+#txn-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  backdrop-filter: blur(6px);
+  transition: opacity 0.2s;
+}
+
+#txn-modal[aria-hidden="true"] {
+  display: none;
+}
+
+.txn-dialog {
+  background: #ffffff;
+  width: 520px;
+  max-width: 95%;
+  border-radius: 16px;
+  padding: 30px 28px;
+  position: relative;
+  box-shadow: 0 25px 70px rgba(0, 0, 0, 0.15), 0 10px 30px rgba(0, 0, 0, 0.08);
+  font-family: system-ui, sans-serif;
+  animation: modalFade 0.18s ease-out;
+}
+
+@keyframes modalFade {
+  from { opacity: 0; transform: translateY(10px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* --- Category List (The dynamic part) --- */
+.category-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 180px;
+  overflow-y: auto;
+  padding: 6px;
+  border: 1px solid #eef2f6;
+  border-radius: 8px;
+  background: #ffffff;
+  margin-top: 8px;
+}
+
+.cat-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.1s;
+}
+
+.cat-item:hover { background: #f8fafc; }
+.cat-item.selected { 
+  background: #eef2ff; 
+  border: 1px solid #c7d2fe; 
+}
+
+.cat-name { font-size: 14px; color: #111827; flex: 1; }
+
+.trash-btn {
+  background: transparent;
+  border: none;
+  color: #9ca3af;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+}
+
+.trash-btn:hover { color: #ef4444; background: #fee2e2; }
+
+/* --- Type Toggle (Income/Expense) --- */
+.type-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.type-toggle.expense { background: #fef2f2; color: #b91c1c; border-color: #fecaca; }
+.type-toggle.income { background: #ecfdf5; color: #047857; border-color: #a7f3d0; }
+
+/* --- Form Utilities --- */
+.txn-row { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
+.txn-row label { font-size: 13px; font-weight: 500; color: #374151; }
+.txn-row input, .txn-row select { padding: 10px; border: 1px solid #d1d5db; border-radius: 8px; }
+
+.create-category-row { display: flex; gap: 8px; }
+.errorspan { font-size: 11px; color: #dc2626; margin-top: 2px; }
+
+/* --- Dropdown Filter styles (from your previous prompt) --- */
+.dropdown.is-open .dropdown__list {
+    display: block !important;
+}

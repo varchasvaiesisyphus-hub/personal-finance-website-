@@ -8,11 +8,44 @@
   <meta name="csrf-token" content="{{ csrf_token }}">
   <script src="{% static 'main.js' %}" defer></script>
 
-
   <title>Transactions</title>
 
-  <!-- Small inline styles for the new controls (you can move to styling.css) -->
   <style>
+    /* --- Dropdown visibility logic --- */
+    .dropdown__list {
+      display: none;
+      position: absolute;
+      background: white;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      list-style: none;
+      padding: 0;
+      margin: 4px 0 0 0;
+      width: 200px;
+      z-index: 100;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    .dropdown.is-open .dropdown__list {
+      display: block !important; /* Forces visibility when JS toggles the class */
+    }
+
+    .dropdown__option {
+      padding: 10px 12px;
+      cursor: pointer;
+      font-size: 14px;
+      color: #333;
+    }
+
+    .dropdown__option:hover {
+      background-color: #f3f4f6;
+    }
+
+    .dropdown__option[aria-selected="true"] {
+      background-color: #eff6ff;
+      color: #2563eb;
+      font-weight: 600;
+    }
     .btn-row { display:flex; gap:8px; align-items:center; }
     .btn-pg2 { padding:8px 12px; border-radius:8px; cursor:pointer; }
     #deleteBtn { background: #ff6b6b; color:#fff; border:none; display:inline-flex; align-items:center; gap:8px; }
@@ -20,10 +53,9 @@
     .select-cell { text-align:center; width:64px; }
     .row-checkbox { width:18px; height:18px; cursor:pointer; }
     .header-checkbox { width:18px; height:18px; cursor:pointer; }
-    /* make sure checkbox column stays at right side: we'll put it last in the table */
     table { width:100%; border-collapse:collapse; }
     thead th, tbody td { padding:14px 12px; }
-    /* Expense styling */
+
     tr[data-type="expense"] .amount-cell {
       color: #b00020;
       background-color: #ffe6e9;
@@ -33,7 +65,6 @@
       display: inline-block;
     }
 
-    /* Income styling */
     tr[data-type="income"] .amount-cell {
       color: #0a7d35;
       background-color: #e6f7ec;
@@ -59,18 +90,18 @@
           <a href="{% url 'transaction' %}" class="button-link">transactions</a>
       </div>
       <div class="dropdown-btn-container">
-        <label for="dropdownBtn" style="display:block;margin-bottom:6px;font-size:13px">Filter</label>
+        <span id="filterLabel" style="display:block; margin-bottom:6px; font-size:13px; font-weight:500;">Filter</span>
         <div class="dropdown" id="accountsDropdown">
           <button
             id="dropdownBtn"
             class="dropdown__button"
+            aria-labelledby="filterLabel selectedLabel"
             aria-haspopup="listbox"
             aria-expanded="false"
             aria-controls="accountsList"
             type="button"
           >
             <span id="selectedLabel">All Accounts</span>
-            <!-- Small down-arrow SVG -->
             <svg class="dropdown__arrow" viewBox="0 0 20 20" aria-hidden="true">
               <path d="M5 7l5 5 5-5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
@@ -83,29 +114,23 @@
             aria-labelledby="dropdownBtn"
             tabindex="-1"
           >
-            <!-- data-value keys are used by the script to filter the table -->
             <li class="dropdown__option" role="option" tabindex="0" data-value="all" aria-selected="true">All Accounts</li>
             <li class="dropdown__option" role="option" tabindex="-1" data-value="income" aria-selected="false">Income</li>
             <li class="dropdown__option" role="option" tabindex="-1" data-value="expense" aria-selected="false">Expenses</li>
           </ul>
         </div>
       </div>
+    </div>
   </header>
-  <form style="display:none;">
-    {% csrf_token %}
-  </form>
 
   <main class="main-box">
     <div class="top-row" style="display:flex; justify-content:space-between; align-items:center;">
       <h2 style="margin:0">Transaction History</h2>
 
       <div class="btn-row">
-        <button class="btn-pg2">Transfer</button>
-        <button class="btn-pg2" id="addNewBtn">Add New</button>
-
-        <!-- Delete button: disabled by default -->
+        <button class="btn-pg2" type="button">Transfer</button>
+        <button class="btn-pg2" id="addNewBtn" type="button">Add New</button>
         <button id="deleteBtn" class="btn-pg2" aria-label="Delete selected transactions" disabled>
-          <!-- small trash svg -->
           <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
             <path fill="currentColor" d="M9 3v1H4v2h16V4h-5V3H9zm2 6v7h2V9h-2zM7 9v7h2V9H7zm8 0v7h2V9h-2z"/>
           </svg>
@@ -116,16 +141,14 @@
 
     <div class="table-area">
       <div class="table-wrap">
-        <table id="txTable" aria-describedby="transactions">
+        <table id="txTable">
           <thead>
             <tr>
               <th>Date</th>
               <th>Category</th>
               <th>Amount</th>
               <th>Account</th>
-              <!-- selection header (right side) -->
               <th class="select-cell">
-                <!-- master checkbox: selects all visible rows -->
                 <input type="checkbox" id="selectAllVisible" class="header-checkbox" aria-label="Select all visible transactions">
               </th>
             </tr>
@@ -139,7 +162,7 @@
               <td class="amount-cell">{{ txn.amount }}</td>
               <td>{{ txn.account|capfirst }}</td>
               <td class="select-cell">
-                <input type="checkbox" class="row-checkbox" data-id="{{ txn.id }}" aria-label="Select transaction">
+                <input type="checkbox" class="row-checkbox" data-id="{{ txn.id }}" name="txn_ids" aria-label="Select transaction">
               </td>
             </tr>
             {% empty %}
@@ -147,16 +170,72 @@
               <td colspan="5" style="text-align:center;">No transactions found.</td>
             </tr>
             {% endfor %}
-          </tbody>
-      </div>
+          </tbody> </table> </div>
     </div>
 
-    <p class="hint">Tip: use the keyboard — <kbd>Enter</kbd>/<kbd>Space</kbd> to open, <kbd>↓</kbd>/<kbd>↑</kbd> to move, and <kbd>Esc</kbd> to close. Selecting an option 
-      s the table rows by Category.</p>
+    <p class="hint">Tip: use the keyboard — <kbd>Enter</kbd>/<kbd>Space</kbd> to open, <kbd>↓</kbd>/<kbd>↑</kbd> to move, and <kbd>Esc</kbd> to close.</p>
   </main>
 
+  <div id="txn-modal" aria-hidden="true">
+    <div class="txn-dialog">
+      <button id="modal-close-x" class="close-x" type="button">&times;</button>
+      <h3>Add Transaction</h3>
+
+      <form id="txn-form" novalidate>
+        {% csrf_token %}
+        <div class="txn-row amount-type-row">
+          <div class="amount-field">
+            <label for="amount">Amount</label>
+            <input id="amount" name="amount" type="number" step="0.01" placeholder="0.00" />
+            <span id="amount-error" class="errorspan"></span>
+          </div>
+
+          <div class="type-field">
+            <label>Type</label>
+            <button id="txn-type-toggle" type="button" class="type-toggle expense">
+              <span id="txn-type-symbol">−</span>
+              <span id="txn-type-label">Expense</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="txn-row">
+          <label for="selected-category-id">Category</label>
+          <input type="hidden" id="selected-category-id" name="category" value="">
+
+          <div class="create-category-row">
+            <input id="new-category-name" type="text" placeholder="New category name" />
+            <button type="button" id="save-category" class="btn">Save</button>
+          </div>
+
+          <div id="category-list" class="category-list" aria-live="polite" role="list"></div>
+          <span id="category-error" class="errorspan"></span>
+        </div>
+
+        <div class="txn-row">
+          <label for="account">Account</label>
+          <select id="account" name="account">
+            <option value="">-- choose account --</option>
+            <option value="cash">Cash</option>
+            <option value="bank">Bank</option>
+          </select>
+          <span id="account-error" class="errorspan"></span>
+        </div>
+
+        <div class="txn-row">
+          <label for="date">Date</label>
+          <input id="date" name="date" type="date" />
+          <span id="date-error" class="errorspan"></span>
+        </div>
+
+        <div id="form-message" class="small" style="min-height:16px;margin-bottom:6px;"></div>
+
+        <div class="txn-actions">
+          <button type="button" id="submit-txn" class="btn btn-primary">Add</button>
+          <button type="button" id="done" class="btn">Done</button>
+        </div>
+      </form>
+    </div>
+  </div>
 </body>
-
 </html>
-
-
