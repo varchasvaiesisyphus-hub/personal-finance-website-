@@ -8,10 +8,8 @@
   <meta name="csrf-token" content="{{ csrf_token }}">
   <script src="{% static 'main.js' %}" defer></script>
 
-
   <title>Transactions</title>
 
-  <!-- Small inline styles for the new controls (you can move to styling.css) -->
   <style>
     .btn-row { display:flex; gap:8px; align-items:center; }
     .btn-pg2 { padding:8px 12px; border-radius:8px; cursor:pointer; }
@@ -20,25 +18,23 @@
     .select-cell { text-align:center; width:64px; }
     .row-checkbox { width:18px; height:18px; cursor:pointer; }
     .header-checkbox { width:18px; height:18px; cursor:pointer; }
-    /* make sure checkbox column stays at right side: we'll put it last in the table */
     table { width:100%; border-collapse:collapse; }
     thead th, tbody td { padding:14px 12px; }
-    /* Expense styling */
+
+    /* FIX: amount-cell must be on a <span> (inline) to show bg color correctly */
     tr[data-type="expense"] .amount-cell {
       color: #b00020;
       background-color: #ffe6e9;
       font-weight: 600;
-      padding: 6px 10px;
+      padding: 4px 10px;
       border-radius: 6px;
       display: inline-block;
     }
-
-    /* Income styling */
     tr[data-type="income"] .amount-cell {
       color: #0a7d35;
       background-color: #e6f7ec;
       font-weight: 600;
-      padding: 6px 10px;
+      padding: 4px 10px;
       border-radius: 6px;
       display: inline-block;
     }
@@ -54,9 +50,9 @@
     </div>
     <div class="panel-btn">
       <div class="buttons">
-          <a href="{% url 'home' %}" class="button-link">Overview</a>
-          <a href="{% url 'accounts' %}" class="button-link">Accounts</a>
-          <a href="{% url 'transaction' %}" class="button-link">transactions</a>
+        <a href="{% url 'home' %}" class="button-link">Overview</a>
+        <a href="{% url 'accounts' %}" class="button-link">Accounts</a>
+        <a href="{% url 'transaction' %}" class="button-link">Transactions</a>
       </div>
       <div class="dropdown-btn-container">
         <label for="dropdownBtn" style="display:block;margin-bottom:6px;font-size:13px">Filter</label>
@@ -70,7 +66,6 @@
             type="button"
           >
             <span id="selectedLabel">All Accounts</span>
-            <!-- Small down-arrow SVG -->
             <svg class="dropdown__arrow" viewBox="0 0 20 20" aria-hidden="true">
               <path d="M5 7l5 5 5-5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
@@ -83,14 +78,16 @@
             aria-labelledby="dropdownBtn"
             tabindex="-1"
           >
-            <!-- data-value keys are used by the script to filter the table -->
             <li class="dropdown__option" role="option" tabindex="0" data-value="all" aria-selected="true">All Accounts</li>
             <li class="dropdown__option" role="option" tabindex="-1" data-value="income" aria-selected="false">Income</li>
             <li class="dropdown__option" role="option" tabindex="-1" data-value="expense" aria-selected="false">Expenses</li>
           </ul>
         </div>
       </div>
+    </div>
   </header>
+
+  <!-- Hidden form just to get the CSRF cookie into the page -->
   <form style="display:none;">
     {% csrf_token %}
   </form>
@@ -103,9 +100,7 @@
         <button class="btn-pg2">Transfer</button>
         <button class="btn-pg2" id="addNewBtn">Add New</button>
 
-        <!-- Delete button: disabled by default -->
         <button id="deleteBtn" class="btn-pg2" aria-label="Delete selected transactions" disabled>
-          <!-- small trash svg -->
           <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
             <path fill="currentColor" d="M9 3v1H4v2h16V4h-5V3H9zm2 6v7h2V9h-2zM7 9v7h2V9H7zm8 0v7h2V9h-2z"/>
           </svg>
@@ -123,9 +118,7 @@
               <th>Category</th>
               <th>Amount</th>
               <th>Account</th>
-              <!-- selection header (right side) -->
               <th class="select-cell">
-                <!-- master checkbox: selects all visible rows -->
                 <input type="checkbox" id="selectAllVisible" class="header-checkbox" aria-label="Select all visible transactions">
               </th>
             </tr>
@@ -136,7 +129,8 @@
             <tr data-type="{{ txn.type }}">
               <td>{{ txn.date|date:"d M Y" }}</td>
               <td>{{ txn.category.name }}</td>
-              <td class="amount-cell">{{ txn.amount }}</td>
+              {# FIX: wrap in <span> so CSS background/color applies; add sign prefix #}
+              <td><span class="amount-cell">{% if txn.type == 'income' %}+{% else %}−{% endif %}{{ txn.amount }}</span></td>
               <td>{{ txn.account|capfirst }}</td>
               <td class="select-cell">
                 <input type="checkbox" class="row-checkbox" data-id="{{ txn.id }}" aria-label="Select transaction">
@@ -144,19 +138,16 @@
             </tr>
             {% empty %}
             <tr>
-              <td colspan="5" style="text-align:center;">No transactions found.</td>
+              <td colspan="5" style="text-align:center;padding:20px;color:#6b7280;">No transactions found.</td>
             </tr>
             {% endfor %}
           </tbody>
-      </div>
-    </div>
+        </table>  {# FIX: was missing </table> closing tag #}
+      </div>  {# /table-wrap — FIX: was missing this closing div #}
+    </div>  {# /table-area #}
 
-    <p class="hint">Tip: use the keyboard — <kbd>Enter</kbd>/<kbd>Space</kbd> to open, <kbd>↓</kbd>/<kbd>↑</kbd> to move, and <kbd>Esc</kbd> to close. Selecting an option 
-      s the table rows by Category.</p>
+    <p class="hint">Tip: use the filter dropdown to show only income or expenses.</p>
   </main>
 
 </body>
-
 </html>
-
-
