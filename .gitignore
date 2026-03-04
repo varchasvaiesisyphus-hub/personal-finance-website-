@@ -1,0 +1,63 @@
+# ----------------------
+# Python
+# ----------------------
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+*.pyd
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# ----------------------
+# Virtual Environment
+# ----------------------
+personalFinanceEnv/
+venv/
+env/
+ENV/
+.env
+# ----------------------
+# Django
+# ----------------------
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+
+# Media uploads (if you add later)
+media/
+
+# ----------------------
+# Environment Variables
+# ----------------------
+.env
+.env.*
+
+# ----------------------
+# VS Code
+# ----------------------
+.vscode/
+*.code-workspace
+
+# ----------------------
+# OS Files
+# ----------------------
+.DS_Store
+Thumbs.db
+
+# ----------------------
+# Jupyter (if used)
+# ----------------------
+.ipynb_checkpoints/
+
+# ----------------------
+# Coverage / Testing
+# ----------------------
+.coverage
+htmlcov/
+.pytest_cache/
