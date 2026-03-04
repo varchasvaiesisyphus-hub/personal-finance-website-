@@ -9,4 +9,5 @@ urlpatterns = [
     path('api/transactions/', views.api_transactions, name='api-transactions'),
     path('api/transactions/delete/', views.api_delete_transactions, name='api-transactions-delete'),
     path('api/categories/<int:pk>/', views.category_delete),
+    # path('api/transfer/', views.api_transfer, name='api-transfer'),   # ← NEW
 ]
