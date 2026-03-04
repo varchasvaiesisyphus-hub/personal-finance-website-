@@ -12,32 +12,91 @@
 
   <style>
     .btn-row { display:flex; gap:8px; align-items:center; }
-    .btn-pg2 { padding:8px 12px; border-radius:8px; cursor:pointer; }
-    #deleteBtn { background: #ff6b6b; color:#fff; border:none; display:inline-flex; align-items:center; gap:8px; }
+    .btn-pg2 { padding:8px 14px; border-radius:8px; cursor:pointer; background:#00e6c3; border:none; font-weight:600; }
+    .btn-pg2:hover { background:#25bda3; }
+    #deleteBtn { background:#ff6b6b; color:#fff; border:none; display:inline-flex; align-items:center; gap:6px; padding:8px 14px; border-radius:8px; cursor:pointer; font-weight:600; }
     #deleteBtn[disabled] { opacity:0.45; cursor:not-allowed; }
     .select-cell { text-align:center; width:64px; }
-    .row-checkbox { width:18px; height:18px; cursor:pointer; }
+    .row-checkbox  { width:18px; height:18px; cursor:pointer; }
     .header-checkbox { width:18px; height:18px; cursor:pointer; }
-    table { width:100%; border-collapse:collapse; }
-    thead th, tbody td { padding:14px 12px; }
 
-    /* FIX: amount-cell must be on a <span> (inline) to show bg color correctly */
+    /* top-controls row: filter LEFT, buttons RIGHT */
+    .controls-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .filter-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .filter-left label {
+      font-size: 13px;
+      font-weight: 500;
+      color: #374151;
+      white-space: nowrap;
+    }
+    /* inline dropdown inside main box */
+    .filter-left .dropdown { width: 170px; }
+    .filter-left .dropdown__button {
+      background: #f9fafb;
+      border: 1px solid #d1d5db;
+      padding: 7px 12px;
+      font-size: 14px;
+    }
+
     tr[data-type="expense"] .amount-cell {
-      color: #b00020;
-      background-color: #ffe6e9;
-      font-weight: 600;
-      padding: 4px 10px;
-      border-radius: 6px;
-      display: inline-block;
+      color:#b00020; background-color:#ffe6e9;
+      font-weight:600; padding:4px 10px; border-radius:6px; display:inline-block;
     }
     tr[data-type="income"] .amount-cell {
-      color: #0a7d35;
-      background-color: #e6f7ec;
-      font-weight: 600;
-      padding: 4px 10px;
-      border-radius: 6px;
-      display: inline-block;
+      color:#0a7d35; background-color:#e6f7ec;
+      font-weight:600; padding:4px 10px; border-radius:6px; display:inline-block;
     }
+
+    /* Transfer modal */
+    #transfer-modal {
+      position:fixed; inset:0; background:rgba(15,23,42,0.45);
+      display:flex; align-items:center; justify-content:center;
+      z-index:9999; backdrop-filter:blur(6px);
+    }
+    #transfer-modal[aria-hidden="true"] { display:none; }
+    .transfer-dialog {
+      background:#fff; width:440px; max-width:95%; border-radius:16px;
+      padding:30px 28px; position:relative;
+      box-shadow:0 25px 70px rgba(0,0,0,0.15),0 10px 30px rgba(0,0,0,0.08);
+      font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+      animation:tFade .18s ease-out;
+    }
+    @keyframes tFade {
+      from{opacity:0;transform:translateY(10px) scale(.98)}
+      to{opacity:1;transform:translateY(0) scale(1)}
+    }
+    .transfer-dialog h3 { margin:0 0 20px; font-size:20px; font-weight:600; color:#111827; }
+    .transfer-dialog .close-x {
+      position:absolute; right:18px; top:18px; border:none;
+      background:transparent; font-size:20px; cursor:pointer; color:#6b7280;
+    }
+    .transfer-dialog .close-x:hover { color:#111827; }
+    .t-row { display:flex; flex-direction:column; gap:6px; margin-bottom:16px; }
+    .t-row label { font-size:13px; font-weight:500; color:#374151; }
+    .t-row select, .t-row input {
+      padding:10px 12px; border-radius:8px; border:1px solid #d1d5db; font-size:14px;
+    }
+    .t-row select:focus, .t-row input:focus {
+      outline:none; border-color:#2563eb; box-shadow:0 0 0 3px rgba(37,99,235,.12);
+    }
+    .t-actions { display:flex; justify-content:flex-end; gap:10px; margin-top:14px; }
+    .t-btn { padding:10px 16px; border-radius:8px; cursor:pointer; border:1px solid #d1d5db; background:#f3f4f6; font-weight:500; }
+    .t-btn:hover { background:#e5e7eb; }
+    .t-btn-primary { background:#2563eb; color:#fff; border:none; }
+    .t-btn-primary:hover { background:#1d4ed8; }
+    #transfer-msg { font-size:13px; min-height:16px; margin-bottom:4px; }
+    .t-err { font-size:12px; color:#b91c1c; min-height:14px; display:block; }
   </style>
 </head>
 
@@ -46,62 +105,53 @@
     <div class="left">
       <h1 id="home_title">Personal Finance Tracker</h1>
       <h3>Welcome back Varchasva</h3>
-      <p id="pp">This is your financial transactions</p>
+      <p id="pp">Transaction history</p>
     </div>
     <div class="panel-btn">
       <div class="buttons">
-        <a href="{% url 'home' %}" class="button-link">Overview</a>
-        <a href="{% url 'accounts' %}" class="button-link">Accounts</a>
+        <a href="{% url 'home' %}"        class="button-link">Overview</a>
+        <a href="{% url 'accounts' %}"    class="button-link">Accounts</a>
         <a href="{% url 'transaction' %}" class="button-link">Transactions</a>
-      </div>
-      <div class="dropdown-btn-container">
-        <label for="dropdownBtn" style="display:block;margin-bottom:6px;font-size:13px">Filter</label>
-        <div class="dropdown" id="accountsDropdown">
-          <button
-            id="dropdownBtn"
-            class="dropdown__button"
-            aria-haspopup="listbox"
-            aria-expanded="false"
-            aria-controls="accountsList"
-            type="button"
-          >
-            <span id="selectedLabel">All Accounts</span>
-            <svg class="dropdown__arrow" viewBox="0 0 20 20" aria-hidden="true">
-              <path d="M5 7l5 5 5-5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-          </button>
-
-          <ul
-            id="accountsList"
-            class="dropdown__list"
-            role="listbox"
-            aria-labelledby="dropdownBtn"
-            tabindex="-1"
-          >
-            <li class="dropdown__option" role="option" tabindex="0" data-value="all" aria-selected="true">All Accounts</li>
-            <li class="dropdown__option" role="option" tabindex="-1" data-value="income" aria-selected="false">Income</li>
-            <li class="dropdown__option" role="option" tabindex="-1" data-value="expense" aria-selected="false">Expenses</li>
-          </ul>
-        </div>
       </div>
     </div>
   </header>
 
-  <!-- Hidden form just to get the CSRF cookie into the page -->
-  <form style="display:none;">
-    {% csrf_token %}
-  </form>
+  <!-- Hidden form to stamp CSRF cookie -->
+  <form style="display:none;">{% csrf_token %}</form>
 
   <main class="main-box">
-    <div class="top-row" style="display:flex; justify-content:space-between; align-items:center;">
-      <h2 style="margin:0">Transaction History</h2>
 
+    <!-- ── Controls bar: Filter LEFT · Buttons RIGHT ── -->
+    <div class="controls-bar">
+
+      <!-- Filter (moved here from header) -->
+      <div class="filter-left">
+        <label for="dropdownBtn">Filter:</label>
+        <div class="dropdown" id="accountsDropdown">
+          <button id="dropdownBtn" class="dropdown__button"
+                  aria-haspopup="listbox" aria-expanded="false"
+                  aria-controls="accountsList" type="button">
+            <span id="selectedLabel">All</span>
+            <svg class="dropdown__arrow" viewBox="0 0 20 20" aria-hidden="true">
+              <path d="M5 7l5 5 5-5" fill="none" stroke="currentColor"
+                    stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+          <ul id="accountsList" class="dropdown__list"
+              role="listbox" aria-labelledby="dropdownBtn" tabindex="-1">
+            <li class="dropdown__option" role="option" tabindex="0"  data-value="all"     aria-selected="true">All</li>
+            <li class="dropdown__option" role="option" tabindex="-1" data-value="income"  aria-selected="false">Income</li>
+            <li class="dropdown__option" role="option" tabindex="-1" data-value="expense" aria-selected="false">Expenses</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Action buttons RIGHT -->
       <div class="btn-row">
-        <button class="btn-pg2">Transfer</button>
-        <button class="btn-pg2" id="addNewBtn">Add New</button>
-
-        <button id="deleteBtn" class="btn-pg2" aria-label="Delete selected transactions" disabled>
-          <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <button class="btn-pg2" id="transferBtn">Transfer</button>
+        <button class="btn-pg2" id="addNewBtn">+ Add New</button>
+        <button id="deleteBtn" aria-label="Delete selected transactions" disabled>
+          <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
             <path fill="currentColor" d="M9 3v1H4v2h16V4h-5V3H9zm2 6v7h2V9h-2zM7 9v7h2V9H7zm8 0v7h2V9h-2z"/>
           </svg>
           Delete
@@ -109,9 +159,11 @@
       </div>
     </div>
 
+    <h2 style="margin:0 0 14px;">Transaction History</h2>
+
     <div class="table-area">
       <div class="table-wrap">
-        <table id="txTable" aria-describedby="transactions">
+        <table id="txTable">
           <thead>
             <tr>
               <th>Date</th>
@@ -119,35 +171,84 @@
               <th>Amount</th>
               <th>Account</th>
               <th class="select-cell">
-                <input type="checkbox" id="selectAllVisible" class="header-checkbox" aria-label="Select all visible transactions">
+                <input type="checkbox" id="selectAllVisible" class="header-checkbox"
+                       aria-label="Select all visible transactions">
               </th>
             </tr>
           </thead>
-
           <tbody>
             {% for txn in transactions %}
             <tr data-type="{{ txn.type }}">
               <td>{{ txn.date|date:"d M Y" }}</td>
               <td>{{ txn.category.name }}</td>
-              {# FIX: wrap in <span> so CSS background/color applies; add sign prefix #}
               <td><span class="amount-cell">{% if txn.type == 'income' %}+{% else %}−{% endif %}{{ txn.amount }}</span></td>
               <td>{{ txn.account|capfirst }}</td>
               <td class="select-cell">
-                <input type="checkbox" class="row-checkbox" data-id="{{ txn.id }}" aria-label="Select transaction">
+                <input type="checkbox" class="row-checkbox" data-id="{{ txn.id }}"
+                       aria-label="Select transaction">
               </td>
             </tr>
             {% empty %}
             <tr>
-              <td colspan="5" style="text-align:center;padding:20px;color:#6b7280;">No transactions found.</td>
+              <td colspan="5" style="text-align:center;padding:24px;color:#6b7280;">
+                No transactions yet. Click <strong>+ Add New</strong> to get started.
+              </td>
             </tr>
             {% endfor %}
           </tbody>
-        </table>  {# FIX: was missing </table> closing tag #}
-      </div>  {# /table-wrap — FIX: was missing this closing div #}
-    </div>  {# /table-area #}
+        </table>
+      </div>
+    </div>
 
-    <p class="hint">Tip: use the filter dropdown to show only income or expenses.</p>
+    <p class="hint">Use the filter to show only income or expenses. Select rows with checkboxes to delete them.</p>
   </main>
+
+  <!-- ── Transfer Modal ── -->
+  <div id="transfer-modal" aria-hidden="true">
+    <div class="transfer-dialog">
+      <button class="close-x" id="transfer-close">&times;</button>
+      <h3>Transfer Between Accounts</h3>
+
+      <div class="t-row">
+        <label for="t-from">From</label>
+        <select id="t-from">
+          <option value="">-- select account --</option>
+          <option value="cash">Cash</option>
+          <option value="bank">Bank</option>
+        </select>
+        <span class="t-err" id="t-from-err"></span>
+      </div>
+
+      <div class="t-row">
+        <label for="t-to">To</label>
+        <select id="t-to">
+          <option value="">-- select account --</option>
+          <option value="cash">Cash</option>
+          <option value="bank">Bank</option>
+        </select>
+        <span class="t-err" id="t-to-err"></span>
+      </div>
+
+      <div class="t-row">
+        <label for="t-amount">Amount</label>
+        <input id="t-amount" type="number" step="0.01" min="0.01" placeholder="0.00" />
+        <span class="t-err" id="t-amount-err"></span>
+      </div>
+
+      <div class="t-row">
+        <label for="t-date">Date</label>
+        <input id="t-date" type="date" />
+        <span class="t-err" id="t-date-err"></span>
+      </div>
+
+      <div id="transfer-msg"></div>
+
+      <div class="t-actions">
+        <button class="t-btn t-btn-primary" id="transfer-submit">Transfer</button>
+        <button class="t-btn" id="transfer-cancel">Cancel</button>
+      </div>
+    </div>
+  </div>
 
 </body>
 </html>

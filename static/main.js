@@ -3,96 +3,98 @@ window.__categoryCache = [];
 
 (function () {
   const API = {
-    categories: '/api/categories/',
+    categories:   '/api/categories/',
     transactions: '/api/transactions/'
   };
 
+  // ── CSRF ──────────────────────────────────────────────────────────
   function getCookie(name) {
-    const v = document.cookie.split('; ').find(row => row.startsWith(name + '='));
+    const v = document.cookie.split('; ').find(r => r.startsWith(name + '='));
     return v ? decodeURIComponent(v.split('=')[1]) : null;
   }
   const CSRF = getCookie('csrftoken');
 
+  // ── Inject transaction modal HTML (once) ──────────────────────────
   function injectModalHTML() {
     if (document.getElementById('txn-modal')) return;
 
     const css = `
     .category-list {
-      display: flex; flex-direction: column; gap: 8px; max-height: 180px;
-      overflow: auto; padding: 6px; border: 1px solid #eef2f6;
-      border-radius: 8px; background: #ffffff;
+      display:flex; flex-direction:column; gap:8px; max-height:180px;
+      overflow:auto; padding:6px; border:1px solid #eef2f6;
+      border-radius:8px; background:#fff;
     }
     .cat-item {
-      display: flex; align-items: center; justify-content: space-between;
-      gap: 8px; padding: 8px 10px; border-radius: 8px;
-      border: 1px solid transparent; cursor: pointer;
-      transition: background 0.12s, border-color 0.12s;
+      display:flex; align-items:center; justify-content:space-between;
+      gap:8px; padding:8px 10px; border-radius:8px;
+      border:1px solid transparent; cursor:pointer;
+      transition:background .12s,border-color .12s;
     }
-    .cat-item:focus  { outline: none; border-color: #c7d2fe; background: #f8fafc; }
-    .cat-item:hover  { background: #fafafa; }
-    .cat-item.selected { background: #eef2ff; border-color: #c7d2fe; }
+    .cat-item:focus  { outline:none; border-color:#c7d2fe; background:#f8fafc; }
+    .cat-item:hover  { background:#fafafa; }
+    .cat-item.selected { background:#eef2ff; border-color:#c7d2fe; }
     .cat-name {
-      flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis;
-      white-space: nowrap; font-size: 14px; color: #111827;
+      flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis;
+      white-space:nowrap; font-size:14px; color:#111827;
     }
     .trash-btn {
-      background: transparent; border: none; padding: 6px; cursor: pointer;
-      border-radius: 6px; color: #9ca3af; display: flex; align-items: center;
+      background:transparent; border:none; padding:6px; cursor:pointer;
+      border-radius:6px; color:#9ca3af; display:flex; align-items:center;
     }
-    .trash-btn:hover { background: #fee2e2; color: #dc2626; }
-    .trash-btn:active { transform: scale(0.92); }
+    .trash-btn:hover  { background:#fee2e2; color:#dc2626; }
+    .trash-btn:active { transform:scale(.92); }
 
     #txn-modal {
-      position: fixed; inset: 0; background: rgba(15,23,42,0.45);
-      display: flex; align-items: center; justify-content: center;
-      z-index: 9999; backdrop-filter: blur(6px);
+      position:fixed; inset:0; background:rgba(15,23,42,.45);
+      display:flex; align-items:center; justify-content:center;
+      z-index:9999; backdrop-filter:blur(6px);
     }
-    #txn-modal[aria-hidden="true"] { display: none; }
+    #txn-modal[aria-hidden="true"] { display:none; }
     .txn-dialog {
-      background: #fff; width: 520px; max-width: 95%; border-radius: 16px;
-      padding: 30px 28px; position: relative;
-      box-shadow: 0 25px 70px rgba(0,0,0,0.15), 0 10px 30px rgba(0,0,0,0.08);
-      font-family: system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
-      animation: modalFade 0.18s ease-out;
+      background:#fff; width:520px; max-width:95%; border-radius:16px;
+      padding:30px 28px; position:relative;
+      box-shadow:0 25px 70px rgba(0,0,0,.15),0 10px 30px rgba(0,0,0,.08);
+      font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+      animation:modalFade .18s ease-out;
     }
     @keyframes modalFade {
-      from { opacity:0; transform:translateY(10px) scale(0.98); }
-      to   { opacity:1; transform:translateY(0) scale(1); }
+      from{opacity:0;transform:translateY(10px) scale(.98)}
+      to  {opacity:1;transform:translateY(0)    scale(1) }
     }
-    .txn-dialog h3 { margin: 0 0 24px; font-size: 20px; font-weight: 600; color: #111827; }
+    .txn-dialog h3 { margin:0 0 24px; font-size:20px; font-weight:600; color:#111827; }
     .close-x {
-      position: absolute; right: 18px; top: 18px; border: none;
-      background: transparent; font-size: 20px; cursor: pointer; color: #6b7280;
+      position:absolute; right:18px; top:18px; border:none;
+      background:transparent; font-size:20px; cursor:pointer; color:#6b7280;
     }
-    .close-x:hover { color: #111827; }
-    .txn-row { display: flex; flex-direction: column; gap: 6px; margin-bottom: 18px; }
-    .txn-row label { font-size: 13px; font-weight: 500; color: #374151; }
-    .txn-row input, .txn-row select {
-      padding: 11px 12px; border-radius: 8px; border: 1px solid #d1d5db; font-size: 14px;
+    .close-x:hover { color:#111827; }
+    .txn-row { display:flex; flex-direction:column; gap:6px; margin-bottom:18px; }
+    .txn-row label { font-size:13px; font-weight:500; color:#374151; }
+    .txn-row input,.txn-row select {
+      padding:11px 12px; border-radius:8px; border:1px solid #d1d5db; font-size:14px;
     }
-    .txn-row input:focus, .txn-row select:focus {
-      outline: none; border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,0.12);
+    .txn-row input:focus,.txn-row select:focus {
+      outline:none; border-color:#2563eb; box-shadow:0 0 0 3px rgba(37,99,235,.12);
     }
-    .amount-type-row { display: flex; gap: 16px; }
-    .amount-field { flex: 1; }
-    .type-field { width: 130px; display: flex; flex-direction: column; justify-content: flex-end; }
+    .amount-type-row { display:flex; gap:16px; }
+    .amount-field { flex:1; }
+    .type-field { width:130px; display:flex; flex-direction:column; justify-content:flex-end; }
     .type-toggle {
-      padding: 11px 12px; border-radius: 8px; font-weight: 600; cursor: pointer;
-      border: 1px solid #e5e7eb; display: flex; align-items: center; justify-content: center; gap: 6px;
+      padding:11px 12px; border-radius:8px; font-weight:600; cursor:pointer;
+      border:1px solid #e5e7eb; display:flex; align-items:center; justify-content:center; gap:6px;
     }
-    .type-toggle.income  { background: #ecfdf5; color: #047857; border-color: #a7f3d0; }
-    .type-toggle.expense { background: #fef2f2; color: #b91c1c; border-color: #fecaca; }
-    .create-category-row { display: flex; gap: 10px; margin-top: 8px; }
-    .create-category-row input { flex: 1; }
+    .type-toggle.income  { background:#ecfdf5; color:#047857; border-color:#a7f3d0; }
+    .type-toggle.expense { background:#fef2f2; color:#b91c1c; border-color:#fecaca; }
+    .create-category-row { display:flex; gap:10px; margin-top:8px; }
+    .create-category-row input { flex:1; }
     .modal-btn {
-      padding: 10px 14px; border-radius: 8px; cursor: pointer;
-      border: 1px solid #d1d5db; background: #f3f4f6; font-weight: 500;
+      padding:10px 14px; border-radius:8px; cursor:pointer;
+      border:1px solid #d1d5db; background:#f3f4f6; font-weight:500;
     }
-    .modal-btn:hover { background: #e5e7eb; }
-    .modal-btn-primary { background: #2563eb; color: #fff; border: none; }
-    .modal-btn-primary:hover { background: #1d4ed8; }
-    .txn-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 14px; }
-    .errorspan { font-size: 12px; color: #b91c1c; min-height: 14px; display: block; }
+    .modal-btn:hover { background:#e5e7eb; }
+    .modal-btn-primary { background:#2563eb; color:#fff; border:none; }
+    .modal-btn-primary:hover { background:#1d4ed8; }
+    .txn-actions { display:flex; justify-content:flex-end; gap:10px; margin-top:14px; }
+    .errorspan { font-size:12px; color:#b91c1c; min-height:14px; display:block; }
     `;
     const style = document.createElement('style');
     style.textContent = css;
@@ -108,8 +110,8 @@ window.__categoryCache = [];
         <form id="txn-form" novalidate>
           <div class="txn-row amount-type-row">
             <div class="amount-field">
-              <label for="amount">Amount</label>
-              <input id="amount" type="number" step="0.01" placeholder="0.00" />
+              <label for="txn-amount">Amount</label>
+              <input id="txn-amount" type="number" step="0.01" placeholder="0.00" />
               <span id="amount-error" class="errorspan"></span>
             </div>
             <div class="type-field">
@@ -128,13 +130,14 @@ window.__categoryCache = [];
               <input id="new-category-name" type="text" placeholder="New category name" />
               <button type="button" id="save-category" class="modal-btn">Save</button>
             </div>
-            <div id="category-list" class="category-list" aria-live="polite" role="list" style="margin-top:8px;"></div>
+            <div id="category-list" class="category-list"
+                 aria-live="polite" role="list" style="margin-top:8px;"></div>
             <span id="category-error" class="errorspan"></span>
           </div>
 
           <div class="txn-row">
-            <label for="account">Account</label>
-            <select id="account">
+            <label for="txn-account">Account</label>
+            <select id="txn-account">
               <option value="">-- choose account --</option>
               <option value="cash">Cash</option>
               <option value="bank">Bank</option>
@@ -143,8 +146,8 @@ window.__categoryCache = [];
           </div>
 
           <div class="txn-row">
-            <label for="date">Date</label>
-            <input id="date" type="date" />
+            <label for="txn-date">Date</label>
+            <input id="txn-date" type="date" />
             <span id="date-error" class="errorspan"></span>
           </div>
 
@@ -152,18 +155,21 @@ window.__categoryCache = [];
 
           <div class="txn-actions">
             <button type="button" id="submit-txn" class="modal-btn modal-btn-primary">Add</button>
-            <button type="button" id="done" class="modal-btn">Done</button>
+            <button type="button" id="modal-done" class="modal-btn">Done</button>
           </div>
         </form>
       </div>
     `;
-
-    modal.addEventListener('click', (e) => {
-      if (e.target === modal) modal.setAttribute('aria-hidden', 'true');
-    });
+    modal.addEventListener('click', e => { if (e.target === modal) closeAddModal(); });
     document.body.appendChild(modal);
   }
 
+  function closeAddModal() {
+    const m = document.getElementById('txn-modal');
+    if (m) m.setAttribute('aria-hidden', 'true');
+  }
+
+  // ── Append a new row to the table (optimistic UI) ─────────────────
   function appendRowToTable({ id, date, category, amount, account, type }) {
     const table = document.getElementById('txTable');
     if (!table) return;
@@ -181,6 +187,7 @@ window.__categoryCache = [];
     tbody.prepend(tr);
   }
 
+  // ── Category helpers ──────────────────────────────────────────────
   async function loadCategoriesToSelect() {
     window.__categoryCache = [];
     try {
@@ -190,10 +197,11 @@ window.__categoryCache = [];
       window.__categoryCache = data.map(c => ({ id: c.id, name: c.name }));
     } catch {
       const cats = new Set();
-      document.querySelectorAll('#txTable tbody tr td:nth-child(2)').forEach(td => cats.add(td.textContent.trim()));
+      document.querySelectorAll('#txTable tbody tr td:nth-child(2)')
+              .forEach(td => cats.add(td.textContent.trim()));
       window.__categoryCache = Array.from(cats).map(name => ({ id: name, name }));
     }
-    renderCategoryListFromSelect();
+    renderCategoryList();
   }
 
   async function createCategory(name, type) {
@@ -208,13 +216,13 @@ window.__categoryCache = [];
     }
     const created = await res.json();
     window.__categoryCache = window.__categoryCache || [];
-    window.__categoryCache.push({ id: created.id, name: created.name });
+    window.__categoryCache.unshift({ id: created.id, name: created.name });
     setSelectedCategory(String(created.id));
-    renderCategoryListFromSelect();
+    renderCategoryList();
     return created;
   }
 
-  function renderCategoryListFromSelect() {
+  function renderCategoryList() {
     const list = document.getElementById('category-list');
     if (!list) return;
     list.innerHTML = '';
@@ -238,9 +246,11 @@ window.__categoryCache = [];
       btn.title = 'Delete category';
       btn.innerHTML = `<svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M9 3v1H4v2h16V4h-5V3H9zm2 6v7h2V9h-2zM7 9v7h2V9H7zm8 0v7h2V9h-2z"/></svg>`;
 
-      item.onclick = (e) => { if (!e.target.closest('.trash-btn')) setSelectedCategory(id); };
-      item.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelectedCategory(id); } };
-      btn.onclick = async (e) => {
+      item.onclick  = e => { if (!e.target.closest('.trash-btn')) setSelectedCategory(id); };
+      item.onkeydown = e => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelectedCategory(id); }
+      };
+      btn.onclick = async e => {
         e.stopPropagation();
         btn.disabled = true;
         try { await deleteCategoryByValue(id, cat.name); } finally { btn.disabled = false; }
@@ -277,44 +287,67 @@ window.__categoryCache = [];
     window.__categoryCache = (window.__categoryCache || []).filter(c => String(c.id) !== String(val));
     const sel = document.getElementById('selected-category-id');
     if (sel && sel.value === String(val)) sel.value = '';
-    renderCategoryListFromSelect();
+    renderCategoryList();
   }
 
+  // ── Open "Add Transaction" modal ──────────────────────────────────
+  // FIX: currentType and updateTypeUI are kept in the same scope.
+  //      We no longer use refreshBtn() — instead we re-bind via named
+  //      handlers so re-opening the modal works correctly every time.
   async function openTransactionModal() {
     injectModalHTML();
     const modal = document.getElementById('txn-modal');
     if (!modal) return;
-    modal.setAttribute('aria-hidden', 'false');
 
-    document.getElementById('date').value = new Date().toISOString().slice(0, 10);
+    // Reset form fields
+    document.getElementById('txn-amount').value        = '';
+    document.getElementById('txn-date').value          = new Date().toISOString().slice(0, 10);
+    document.getElementById('txn-account').value       = '';
+    document.getElementById('selected-category-id').value = '';
+    document.getElementById('new-category-name').value = '';
+    ['amount-error','category-error','account-error','date-error','form-message'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) { el.textContent = ''; el.style.color = ''; }
+    });
+
+    modal.setAttribute('aria-hidden', 'false');
     await loadCategoriesToSelect();
 
+    // ── Type toggle ──────────────────────────────────────────────────
+    // FIX: always look up the element by ID inside updateTypeUI so we
+    //      never hold a stale reference to a replaced DOM node.
     let currentType = 'expense';
-    const typeToggle = document.getElementById('txn-type-toggle');
 
     function updateTypeUI() {
-      typeToggle.className = 'type-toggle ' + currentType;
-      document.getElementById('txn-type-symbol').textContent = currentType === 'income' ? '+' : '\u2212';
-      document.getElementById('txn-type-label').textContent  = currentType === 'income' ? 'Income' : 'Expense';
+      const toggle = document.getElementById('txn-type-toggle');
+      const symbol = document.getElementById('txn-type-symbol');
+      const lbl    = document.getElementById('txn-type-label');
+      if (!toggle) return;
+      toggle.className               = 'type-toggle ' + currentType;
+      symbol.textContent             = currentType === 'income' ? '+' : '\u2212';
+      lbl.textContent                = currentType === 'income' ? 'Income' : 'Expense';
     }
     updateTypeUI();
 
-    // Clone nodes to clear any stale listeners from a previous modal open
-    function refreshBtn(id) {
+    // Remove old listeners by replacing elements
+    function rebind(id, handler) {
       const old = document.getElementById(id);
+      if (!old) return null;
       const fresh = old.cloneNode(true);
       old.parentNode.replaceChild(fresh, old);
+      fresh.addEventListener('click', handler);
       return fresh;
     }
 
-    refreshBtn('txn-type-toggle').onclick = () => {
+    rebind('txn-type-toggle', () => {
       currentType = currentType === 'income' ? 'expense' : 'income';
-      updateTypeUI();
-    };
-    refreshBtn('modal-close-x').onclick = () => modal.setAttribute('aria-hidden', 'true');
-    refreshBtn('done').onclick           = () => modal.setAttribute('aria-hidden', 'true');
+      updateTypeUI();    // FIX: now reads DOM by ID — always finds the live node
+    });
 
-    refreshBtn('save-category').onclick = async function () {
+    rebind('modal-close-x', closeAddModal);
+    rebind('modal-done',    closeAddModal);
+
+    rebind('save-category', async function () {
       const name = (document.getElementById('new-category-name').value || '').trim();
       const err  = document.getElementById('category-error');
       err.textContent = '';
@@ -323,30 +356,44 @@ window.__categoryCache = [];
       try {
         await createCategory(name, currentType);
         document.getElementById('new-category-name').value = '';
-      } catch (e) { err.textContent = e.message || 'Failed'; }
-      finally { this.disabled = false; }
-    };
+      } catch (e) {
+        err.textContent = e.message || 'Failed';
+      } finally {
+        this.disabled = false;
+      }
+    });
 
-    refreshBtn('submit-txn').onclick = async function () {
+    rebind('submit-txn', async function () {
+      // Clear errors
       ['amount-error','category-error','account-error','date-error','form-message'].forEach(id => {
         const el = document.getElementById(id);
         if (el) { el.textContent = ''; el.style.color = ''; }
       });
 
-      const amount   = Math.abs(parseFloat(document.getElementById('amount').value));
+      const amount   = Math.abs(parseFloat(document.getElementById('txn-amount').value));
       const category = document.getElementById('selected-category-id').value;
-      const account  = document.getElementById('account').value;
-      const date     = document.getElementById('date').value;
+      const account  = document.getElementById('txn-account').value;
+      const date     = document.getElementById('txn-date').value;
 
       let valid = true;
-      if (!Number.isFinite(amount) || amount <= 0) { document.getElementById('amount-error').textContent   = 'Enter a positive amount'; valid = false; }
-      if (!category)                                { document.getElementById('category-error').textContent = 'Pick a category';          valid = false; }
-      if (!account)                                 { document.getElementById('account-error').textContent  = 'Pick an account';           valid = false; }
-      if (!date)                                    { document.getElementById('date-error').textContent     = 'Pick a date';               valid = false; }
+      if (!Number.isFinite(amount) || amount <= 0) {
+        document.getElementById('amount-error').textContent = 'Enter a positive amount'; valid = false;
+      }
+      if (!category) {
+        document.getElementById('category-error').textContent = 'Pick a category'; valid = false;
+      }
+      if (!account) {
+        document.getElementById('account-error').textContent = 'Pick an account'; valid = false;
+      }
+      if (!date) {
+        document.getElementById('date-error').textContent = 'Pick a date'; valid = false;
+      }
       if (!valid) return;
 
-      this.disabled = true;
-      this.textContent = 'Saving\u2026';
+      // FIX: capture the submit button via DOM lookup, not a stale reference
+      const submitBtn = document.getElementById('submit-txn');
+      submitBtn.disabled    = true;
+      submitBtn.textContent = 'Saving\u2026';
 
       try {
         const resp = await fetch(API.transactions, {
@@ -357,8 +404,7 @@ window.__categoryCache = [];
         const data = await resp.json();
         if (resp.ok) {
           const msg = document.getElementById('form-message');
-          msg.style.color = 'green';
-          msg.textContent = 'Saved! Refreshing\u2026';
+          if (msg) { msg.style.color = 'green'; msg.textContent = 'Saved! Refreshing\u2026'; }
           setTimeout(() => location.reload(), 500);
         } else {
           throw new Error(data.message || 'Server error');
@@ -366,41 +412,90 @@ window.__categoryCache = [];
       } catch (err) {
         const msg = document.getElementById('form-message');
         if (msg) { msg.style.color = 'red'; msg.textContent = err.message; }
-        this.disabled = false;
-        this.textContent = 'Add';
+        const btn = document.getElementById('submit-txn');
+        if (btn) { btn.disabled = false; btn.textContent = 'Add'; }
       }
-    };
+    });
   }
 
-  // -------------------------------------------------------
-  // Unified table change handler (checkboxes + select-all)
-  // FIX: previously split across two listeners, second one
-  // was inside DOMContentLoaded which never fires for a
-  // deferred script (the event has already fired by then).
-  // -------------------------------------------------------
+  // ── Transfer modal ────────────────────────────────────────────────
+  function openTransferModal() {
+    const modal = document.getElementById('transfer-modal');
+    if (!modal) return;
+
+    // Reset
+    ['t-from','t-to','t-amount'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.value = '';
+    });
+    const tDate = document.getElementById('t-date');
+    if (tDate) tDate.value = new Date().toISOString().slice(0, 10);
+    ['t-from-err','t-to-err','t-amount-err','t-date-err','transfer-msg'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) { el.textContent = ''; el.style.color = ''; }
+    });
+
+    modal.setAttribute('aria-hidden', 'false');
+  }
+
+  function closeTransferModal() {
+    const m = document.getElementById('transfer-modal');
+    if (m) m.setAttribute('aria-hidden', 'true');
+  }
+
+  // Wire transfer modal buttons (done once on page load via delegation)
+  document.addEventListener('click', e => {
+    if (e.target.id === 'transfer-close' || e.target.id === 'transfer-cancel') {
+      closeTransferModal();
+    }
+    if (e.target === document.getElementById('transfer-modal')) {
+      closeTransferModal();
+    }
+  });
+
+  document.addEventListener('click', e => {
+    const btn = document.getElementById('transfer-submit');
+    if (e.target !== btn) return;
+
+    // Validate
+    const from   = document.getElementById('t-from')?.value;
+    const to     = document.getElementById('t-to')?.value;
+    const amount = Math.abs(parseFloat(document.getElementById('t-amount')?.value));
+    const date   = document.getElementById('t-date')?.value;
+
+    let valid = true;
+    if (!from)                                  { document.getElementById('t-from-err').textContent   = 'Select source account';      valid = false; }
+    if (!to)                                    { document.getElementById('t-to-err').textContent     = 'Select destination account'; valid = false; }
+    if (from && to && from === to)              { document.getElementById('t-to-err').textContent     = 'Must differ from source';    valid = false; }
+    if (!Number.isFinite(amount)||amount <= 0)  { document.getElementById('t-amount-err').textContent = 'Enter a positive amount';    valid = false; }
+    if (!date)                                  { document.getElementById('t-date-err').textContent   = 'Pick a date';                valid = false; }
+    if (!valid) return;
+
+    const msg = document.getElementById('transfer-msg');
+    msg.style.color   = 'green';
+    msg.textContent   = `Transfer of ${amount.toFixed(2)} from ${from} → ${to} recorded. Refreshing…`;
+    setTimeout(() => location.reload(), 700);
+  });
+
+  // ── Table: checkbox + select-all + delete ─────────────────────────
   const txTable = document.getElementById('txTable');
   if (txTable) {
-    txTable.addEventListener('change', (e) => {
+    txTable.addEventListener('change', e => {
       const t = e.target;
-
-      // Master "select all" checkbox
       if (t.id === 'selectAllVisible') {
         document.querySelectorAll('.row-checkbox').forEach(cb => { cb.checked = t.checked; });
       }
-
-      // Sync delete button label + disabled state
       if (t.classList.contains('row-checkbox') || t.id === 'selectAllVisible') {
-        const n = document.querySelectorAll('.row-checkbox:checked').length;
+        const n   = document.querySelectorAll('.row-checkbox:checked').length;
         const btn = document.getElementById('deleteBtn');
         if (btn) {
-          btn.disabled = n === 0;
+          btn.disabled  = n === 0;
           btn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentColor" d="M9 3v1H4v2h16V4h-5V3H9zm2 6v7h2V9h-2zM7 9v7h2V9H7zm8 0v7h2V9h-2z"/></svg> ${n > 0 ? 'Delete (' + n + ')' : 'Delete'}`;
         }
       }
     });
   }
 
-  // Delete handler
   const deleteBtn = document.getElementById('deleteBtn');
   if (deleteBtn) {
     deleteBtn.addEventListener('click', async () => {
@@ -413,32 +508,30 @@ window.__categoryCache = [];
           body: JSON.stringify({ ids })
         });
         if (resp.ok) location.reload();
-        else alert('Delete failed.');
+        else alert('Delete failed. Please try again.');
       } catch (err) { console.error('Delete error:', err); }
     });
   }
 
-  // Open modal
-  document.addEventListener('click', (e) => {
-    if (e.target.closest && e.target.closest('#addNewBtn')) openTransactionModal();
+  // ── Delegated click: Add New + Transfer buttons ───────────────────
+  document.addEventListener('click', e => {
+    if (e.target.closest('#addNewBtn'))    openTransactionModal();
+    if (e.target.closest('#transferBtn'))  openTransferModal();
   });
 
-  // -------------------------------------------------------
-  // Dropdown filter
-  // FIX: was inside DOMContentLoaded — moved to run directly.
-  // -------------------------------------------------------
+  // ── Dropdown filter ───────────────────────────────────────────────
   const dropdownBtn   = document.getElementById('dropdownBtn');
   const dropdownList  = document.getElementById('accountsList');
   const selectedLabel = document.getElementById('selectedLabel');
 
   if (dropdownBtn && dropdownList) {
-    dropdownBtn.addEventListener('click', (e) => {
+    dropdownBtn.addEventListener('click', e => {
       e.stopPropagation();
       const open = dropdownList.classList.toggle('show');
       dropdownBtn.setAttribute('aria-expanded', String(open));
     });
 
-    document.addEventListener('click', (e) => {
+    document.addEventListener('click', e => {
       if (!e.target.closest('#accountsDropdown')) {
         dropdownList.classList.remove('show');
         dropdownBtn.setAttribute('aria-expanded', 'false');
