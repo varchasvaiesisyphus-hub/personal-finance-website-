@@ -1,46 +1,529 @@
 <!DOCTYPE html>
 <html lang="en">
 {% load static %}
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <link rel="stylesheet" href="{% static 'style.css' %}">  
-        <link rel="preconnect" href="https://fonts.googleapis.com">
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <!-- <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap" rel="stylesheet">  -->
-        <title>Personal finance</title>
-    </head>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="{% static 'style.css' %}">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <title>Accounts — Personal Finance</title>
 
-    <body>
-        <header class="heading">
-            
-            <div class="left">
-                <h1 id="home_title">Personal finance tracker</h1>
-                <h3>Welcome back varchasva</h3>
-                <p id="pp">This is your financial report</p>
-            </div>
-            <div class="panel-btn">
-                <div class="buttons">
-                    <a href="{% url 'home' %}" class="button-link">Overview</a>
-                    <a href="{% url 'accounts' %}" class="button-link">Accounts</a>
-                    <a href="{% url 'transaction' %}" class="button-link">transactions</a>
-                    <!-- <a href="settings.html" class="button-link" id="Settings">Settings</a> -->
-                </div>
-            </div>
-        </header>
-        <main>
-            <div class="btn-array-acc">
-                <div class="button-acc">Cash</div>
-                <div class="button-acc">Period</div>
-                <div class="button-acc">Add new</div>
-            </div>
-            <div class="card-container">
-                <div class='acc-card' id="inflow">inflow</div>  
-                <div class='acc-card' id="outflow">outflow</div>  
-                <div class="acc-card" id="inflow">Balance</div>  
-            </div>
-            <div class="line-chart">Line chart</div>
+  <style>
+    :root {
+      --navy:   #003366;
+      --teal:   #00e6c3;
+      --teal2:  #00b89c;
+      --red:    #b00020;
+      --green:  #0a7d35;
+      --bg:     #eef3f7;
+      --card:   #ffffff;
+      --border: #e5e7eb;
+      --muted:  #6b7280;
+      --text:   #111827;
+    }
 
+    main { max-width: 960px; margin: 0 auto; padding: 28px 20px 48px; }
+
+    /* ── Account Selector Tabs ── */
+    .account-tabs {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 24px;
+    }
+
+    .acc-tab {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 24px;
+      border-radius: 12px;
+      border: 2px solid var(--border);
+      background: var(--card);
+      cursor: pointer;
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--muted);
+      font-family: inherit;
+      transition: all 0.18s;
+      box-shadow: 0 2px 8px rgba(0,51,102,0.04);
+    }
+    .acc-tab:hover {
+      border-color: var(--teal2);
+      color: var(--navy);
+    }
+    .acc-tab.active {
+      background: linear-gradient(135deg, #003366, #00b89c);
+      border-color: transparent;
+      color: #fff;
+      box-shadow: 0 4px 16px rgba(0,184,156,0.30);
+    }
+    .acc-tab svg { width: 20px; height: 20px; flex-shrink: 0; }
+
+    /* ── Stat Cards ── */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .stat-card {
+      background: var(--card);
+      border-radius: 14px;
+      padding: 20px 22px;
+      border: 1px solid var(--border);
+      box-shadow: 0 4px 14px rgba(0,51,102,0.07);
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.18s, box-shadow 0.18s;
+    }
+    .stat-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(0,51,102,0.11);
+    }
+
+    .stat-card::after {
+      content: '';
+      position: absolute;
+      right: -12px; bottom: -12px;
+      width: 64px; height: 64px;
+      border-radius: 50%;
+      opacity: 0.08;
+    }
+    .stat-card.inflow::after  { background: var(--green); }
+    .stat-card.outflow::after { background: var(--red); }
+    .stat-card.balance::after { background: var(--navy); }
+
+    .stat-icon {
+      width: 36px; height: 36px;
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 10px;
+    }
+    .inflow  .stat-icon { background: #e6f7ec; }
+    .outflow .stat-icon { background: #ffe6e9; }
+    .balance .stat-icon { background: linear-gradient(135deg,#003366,#00e6c3); }
+    .stat-icon svg { width: 16px; height: 16px; }
+
+    .stat-label {
+      font-size: 11px; font-weight: 700; color: var(--muted);
+      text-transform: uppercase; letter-spacing: 0.05em;
+      margin-bottom: 4px;
+    }
+    .stat-value {
+      font-size: 24px; font-weight: 800;
+      font-family: system-ui, -apple-system, sans-serif;
+    }
+    .inflow  .stat-value { color: var(--green); }
+    .outflow .stat-value { color: var(--red); }
+    .balance .stat-value { color: var(--navy); }
+
+    /* ── Charts row ── */
+    .charts-row {
+      display: grid;
+      grid-template-columns: 3fr 2fr;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .chart-card {
+      background: var(--card);
+      border-radius: 14px;
+      padding: 20px 22px;
+      border: 1px solid var(--border);
+      box-shadow: 0 4px 14px rgba(0,51,102,0.07);
+    }
+    .chart-card h3 {
+      margin: 0 0 14px;
+      font-size: 14px; font-weight: 700;
+      color: var(--text);
+      font-family: system-ui, -apple-system, sans-serif;
+    }
+    .chart-wrap { position: relative; height: 200px; }
+
+    /* ── Recent list ── */
+    .recent-card {
+      background: var(--card);
+      border-radius: 14px;
+      padding: 20px 22px;
+      border: 1px solid var(--border);
+      box-shadow: 0 4px 14px rgba(0,51,102,0.07);
+    }
+    .recent-header {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 14px;
+    }
+    .recent-header h3 {
+      margin: 0; font-size: 14px; font-weight: 700;
+      color: var(--text); font-family: system-ui, -apple-system, sans-serif;
+    }
+    .see-all {
+      font-size: 12px; color: var(--teal2);
+      text-decoration: none; font-weight: 600;
+    }
+    .see-all:hover { color: var(--navy); }
+
+    .txn-list { display: flex; flex-direction: column; gap: 8px; }
+
+    .txn-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 9px 12px; border-radius: 9px;
+      background: #f9fafb; border: 1px solid #f1f5f9;
+    }
+    .txn-dot {
+      width: 32px; height: 32px; border-radius: 9px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; font-size: 14px;
+    }
+    .txn-dot.income  { background: #e6f7ec; }
+    .txn-dot.expense { background: #ffe6e9; }
+    .txn-info { flex: 1; min-width: 0; }
+    .txn-cat  { font-size: 13px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .txn-date { font-size: 11px; color: var(--muted); }
+    .txn-amount { font-size: 13px; font-weight: 700; white-space: nowrap; }
+    .txn-amount.income  { color: var(--green); }
+    .txn-amount.expense { color: var(--red); }
+
+    .empty-state {
+      text-align: center; padding: 32px 20px;
+      color: var(--muted); font-size: 13px;
+    }
+    .empty-icon { font-size: 32px; margin-bottom: 6px; }
+
+    /* Skeleton */
+    .skeleton {
+      background: linear-gradient(90deg, #f0f0f0 25%, #e0e8f0 50%, #f0f0f0 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.2s infinite;
+      border-radius: 6px;
+    }
+    @keyframes shimmer {
+      0%   { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
+    /* Loading overlay on chart */
+    .chart-loading {
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(255,255,255,0.85);
+      border-radius: 8px;
+      font-size: 13px; color: var(--muted);
+      z-index: 2;
+    }
+
+    @media (max-width: 720px) {
+      .stats-grid { grid-template-columns: 1fr; }
+      .charts-row { grid-template-columns: 1fr; }
+      .account-tabs { flex-direction: column; }
+    }
+  </style>
+</head>
+
+<body>
+  <header class="heading">
+    <div class="left">
+      <h1 id="home_title">Personal Finance Tracker</h1>
+      <h3>Welcome back, {{ request.user.username|capfirst }}</h3>
+      <p>Account overview</p>
+    </div>
+    <div class="panel-btn">
+      <div class="buttons">
+        <a href="{% url 'home' %}"        class="button-link">Overview</a>
+        <a href="{% url 'accounts' %}"    class="button-link">Accounts</a>
+        <a href="{% url 'transaction' %}" class="button-link">Transactions</a>
+      </div>
+    </div>
+  </header>
+
+  <main>
+
+    <!-- ── Account Selector ── -->
+    <div class="account-tabs">
+      <button class="acc-tab active" data-account="cash" id="tab-cash">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="2" y="6" width="20" height="12" rx="2"/>
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M6 12h.01M18 12h.01"/>
+        </svg>
+        Cash
+      </button>
+      <button class="acc-tab" data-account="bank" id="tab-bank">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M3 21h18M3 10h18M5 6l7-3 7 3M4 10v11M8 10v11M12 10v11M16 10v11M20 10v11"/>
+        </svg>
+        Bank
+      </button>
+    </div>
+
+    <!-- ── Stat Cards ── -->
+    <div class="stats-grid">
+      <div class="stat-card inflow">
+        <div class="stat-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#0a7d35" stroke-width="2">
+            <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/>
+            <polyline points="17 6 23 6 23 12"/>
+          </svg>
+        </div>
+        <div class="stat-label">Total Inflow</div>
+        <div class="stat-value" id="val-inflow"><span class="skeleton" style="height:28px;width:90px;display:block;"></span></div>
+      </div>
+
+      <div class="stat-card outflow">
+        <div class="stat-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#b00020" stroke-width="2">
+            <polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/>
+            <polyline points="17 18 23 18 23 12"/>
+          </svg>
+        </div>
+        <div class="stat-label">Total Outflow</div>
+        <div class="stat-value" id="val-outflow"><span class="skeleton" style="height:28px;width:90px;display:block;"></span></div>
+      </div>
+
+      <div class="stat-card balance">
+        <div class="stat-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2">
+            <line x1="12" y1="1" x2="12" y2="23"/>
+            <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+          </svg>
+        </div>
+        <div class="stat-label">Net Balance</div>
+        <div class="stat-value" id="val-balance"><span class="skeleton" style="height:28px;width:90px;display:block;"></span></div>
+      </div>
+    </div>
+
+    <!-- ── Charts ── -->
+    <div class="charts-row">
+      <div class="chart-card">
+        <h3 id="line-title">Cash — Income vs Expenses (6 months)</h3>
+        <div class="chart-wrap" style="position:relative;">
+          <div class="chart-loading" id="line-loading">Loading…</div>
+          <canvas id="lineChart"></canvas>
+        </div>
+      </div>
+      <div class="chart-card">
+        <h3 id="pie-title">Cash — Expense Breakdown</h3>
+        <div class="chart-wrap" style="position:relative;">
+          <div class="chart-loading" id="pie-loading">Loading…</div>
+          <canvas id="pieChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Recent Transactions ── -->
+    <div class="recent-card">
+      <div class="recent-header">
+        <h3 id="recent-title">Recent — Cash</h3>
+        <a href="{% url 'transaction' %}" class="see-all">See all →</a>
+      </div>
+      <div class="txn-list" id="recent-list">
+        <div class="empty-state"><span class="skeleton" style="height:14px;width:180px;display:inline-block;"></span></div>
+      </div>
+    </div>
+
+  </main>
+
+  <script>
+  (function () {
+    const INR = n => '₹' + Number(n).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+    const PALETTE = [
+      '#003366','#00b89c','#e74c3c','#f39c12',
+      '#8e44ad','#2980b9','#16a085','#c0392b',
+    ];
+
+    let lineChart = null;
+    let pieChart  = null;
+    let currentAccount = 'cash';
+
+    function mergeMonths(incArr, expArr) {
+      const months = new Set([...incArr.map(d => d.month), ...expArr.map(d => d.month)]);
+      const sorted = Array.from(months).sort();
+      const incMap  = Object.fromEntries(incArr.map(d => [d.month, d.total]));
+      const expMap  = Object.fromEntries(expArr.map(d => [d.month, d.total]));
+      return {
+        labels:   sorted.map(m => { const [y,mo]=m.split('-'); return new Date(y,mo-1).toLocaleString('default',{month:'short',year:'2-digit'}); }),
+        incomes:  sorted.map(m => incMap[m]  || 0),
+        expenses: sorted.map(m => expMap[m] || 0),
+      };
+    }
+
+    function buildLineChart(monthly_income, monthly_expense) {
+      const ctx     = document.getElementById('lineChart');
+      const loading = document.getElementById('line-loading');
+      if (!ctx) return;
+      if (lineChart) lineChart.destroy();
+      loading.style.display = 'none';
+
+      const { labels, incomes, expenses } = mergeMonths(monthly_income, monthly_expense);
+
+      if (!labels.length) {
+        ctx.parentElement.innerHTML = '<div class="empty-state"><div class="empty-icon">📈</div>No data for this account yet</div>';
+        return;
+      }
+
+      lineChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [
+            {
+              label: 'Inflow',
+              data: incomes,
+              backgroundColor: 'rgba(10,125,53,0.15)',
+              borderColor: '#0a7d35',
+              borderWidth: 2,
+              borderRadius: 5,
+            },
+            {
+              label: 'Outflow',
+              data: expenses,
+              backgroundColor: 'rgba(176,0,32,0.12)',
+              borderColor: '#b00020',
+              borderWidth: 2,
+              borderRadius: 5,
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: { mode: 'index', intersect: false },
+          plugins: {
+            legend: { position: 'bottom', labels: { boxWidth: 12, padding: 14, font: { size: 11 } } },
+            tooltip: {
+              callbacks: { label: ctx => ` ${ctx.dataset.label}: ${INR(ctx.parsed.y)}` },
+            },
+          },
+          scales: {
+            x: { grid: { display: false }, ticks: { font: { size: 11 } } },
+            y: {
+              grid: { color: 'rgba(0,0,0,0.05)' },
+              ticks: { font: { size: 11 }, callback: v => '₹' + v.toLocaleString('en-IN') },
+            },
+          },
+        },
+      });
+    }
+
+    function buildPieChart(cat_expenses) {
+      const ctx     = document.getElementById('pieChart');
+      const loading = document.getElementById('pie-loading');
+      if (!ctx) return;
+      if (pieChart) pieChart.destroy();
+      loading.style.display = 'none';
+
+      if (!cat_expenses.length) {
+        ctx.parentElement.innerHTML = '<div class="empty-state"><div class="empty-icon">🍰</div>No expenses yet</div>';
+        return;
+      }
+
+      pieChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: cat_expenses.map(c => c.name),
+          datasets: [{
+            data: cat_expenses.map(c => c.total),
+            backgroundColor: PALETTE.slice(0, cat_expenses.length),
+            borderWidth: 2,
+            borderColor: '#fff',
+            hoverOffset: 5,
+          }],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          cutout: '55%',
+          plugins: {
+            legend: { position: 'bottom', labels: { boxWidth: 10, padding: 10, font: { size: 11 } } },
+            tooltip: {
+              callbacks: { label: ctx => ` ${ctx.label}: ${INR(ctx.parsed)}` },
+            },
+          },
+        },
+      });
+    }
+
+    function buildRecent(txns, account) {
+      const list = document.getElementById('recent-list');
+      if (!list) return;
+      if (!txns.length) {
+        list.innerHTML = `<div class="empty-state"><div class="empty-icon">💳</div>No transactions for ${account} yet.</div>`;
+        return;
+      }
+      list.innerHTML = txns.map(t => {
+        const sign  = t.type === 'income' ? '+' : '−';
+        const emoji = t.type === 'income' ? '💰' : '💸';
+        const d     = new Date(t.date);
+        const dateStr = d.toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' });
+        return `
+          <div class="txn-item">
+            <div class="txn-dot ${t.type}">${emoji}</div>
+            <div class="txn-info">
+              <div class="txn-cat">${t.category}</div>
+              <div class="txn-date">${dateStr}</div>
             </div>
-            
-        </main>
+            <div class="txn-amount ${t.type}">${sign}${INR(t.amount)}</div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    async function loadAccount(account) {
+      // Reset charts to loading state
+      ['line-loading','pie-loading'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = 'flex';
+      });
+
+      // Skeleton for stats
+      ['val-inflow','val-outflow','val-balance'].forEach(id => {
+        document.getElementById(id).innerHTML = '<span class="skeleton" style="height:28px;width:90px;display:block;"></span>';
+      });
+
+      document.getElementById('recent-list').innerHTML =
+        '<div class="empty-state"><span class="skeleton" style="height:14px;width:180px;display:inline-block;"></span></div>';
+
+      // Update titles
+      const name = account.charAt(0).toUpperCase() + account.slice(1);
+      document.getElementById('line-title').textContent   = `${name} — Income vs Expenses (6 months)`;
+      document.getElementById('pie-title').textContent    = `${name} — Expense Breakdown`;
+      document.getElementById('recent-title').textContent = `Recent — ${name}`;
+
+      try {
+        const res = await fetch(`/api/account-summary/${account}/`);
+        if (!res.ok) throw new Error();
+        const d = await res.json();
+
+        document.getElementById('val-inflow').textContent  = INR(d.inflow);
+        document.getElementById('val-outflow').textContent = INR(d.outflow);
+        document.getElementById('val-balance').textContent = INR(d.balance);
+
+        buildLineChart(d.monthly_income, d.monthly_expense);
+        buildPieChart(d.category_expenses);
+        buildRecent(d.recent_transactions, name);
+      } catch {
+        ['val-inflow','val-outflow','val-balance'].forEach(id => {
+          document.getElementById(id).textContent = 'Error';
+        });
+      }
+    }
+
+    // ── Tab switching ──
+    document.querySelectorAll('.acc-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.acc-tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        currentAccount = tab.dataset.account;
+        loadAccount(currentAccount);
+      });
+    });
+
+    // Initial load
+    loadAccount('cash');
+  })();
+  </script>
+</body>
+</html>

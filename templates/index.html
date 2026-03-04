@@ -1,54 +1,514 @@
 <!DOCTYPE html>
 <html lang="en">
 {% load static %}
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <link rel="stylesheet" href="{% static 'style.css' %}"> 
-        <link rel="preconnect" href="https://fonts.googleapis.com">
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <!-- <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap" rel="stylesheet">  -->
-        <title>Personal finance</title>
-    </head>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="{% static 'style.css' %}">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <title>Overview — Personal Finance</title>
 
-    <body>
-        <header class="heading">
-            
-            <div class="left">
-                <h1 id="home_title">Personal finance tracker</h1>
-                <h3>Welcome back varchasva</h3>
-                <p id="pp">This is your financial report</p>
+  <style>
+    /* ── Overview-specific styles ── */
+    :root {
+      --navy:   #003366;
+      --teal:   #00e6c3;
+      --teal2:  #00b89c;
+      --red:    #b00020;
+      --green:  #0a7d35;
+      --bg:     #eef3f7;
+      --card:   #ffffff;
+      --border: #e5e7eb;
+      --muted:  #6b7280;
+      --text:   #111827;
+    }
+
+    main { max-width: 960px; margin: 0 auto; padding: 28px 20px 48px; }
+
+    /* ── Summary Cards ── */
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 18px;
+      margin-bottom: 28px;
+    }
+
+    .summary-card {
+      background: var(--card);
+      border-radius: 16px;
+      padding: 22px 24px;
+      border: 1px solid var(--border);
+      box-shadow: 0 4px 16px rgba(0,51,102,0.07);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.18s, box-shadow 0.18s;
+    }
+    .summary-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 28px rgba(0,51,102,0.12);
+    }
+
+    .summary-card::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 5px;
+      border-radius: 16px 0 0 16px;
+    }
+    .summary-card.balance::before  { background: linear-gradient(180deg, #003366, #00e6c3); }
+    .summary-card.income::before   { background: var(--green); }
+    .summary-card.expense::before  { background: var(--red); }
+
+    .card-icon {
+      width: 38px; height: 38px;
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 4px;
+    }
+    .balance .card-icon  { background: linear-gradient(135deg, #003366, #00e6c3); }
+    .income  .card-icon  { background: #e6f7ec; }
+    .expense .card-icon  { background: #ffe6e9; }
+
+    .card-icon svg { width: 18px; height: 18px; }
+
+    .card-label {
+      font-size: 12px; font-weight: 600; color: var(--muted);
+      text-transform: uppercase; letter-spacing: 0.05em;
+    }
+
+    .card-value {
+      font-size: 26px; font-weight: 800; color: var(--text);
+      font-family: system-ui, -apple-system, sans-serif;
+    }
+    .balance .card-value { color: var(--navy); }
+    .income  .card-value { color: var(--green); }
+    .expense .card-value { color: var(--red); }
+
+    .card-sub {
+      font-size: 12px; color: var(--muted);
+    }
+
+    /* ── Charts row ── */
+    .charts-row {
+      display: grid;
+      grid-template-columns: 3fr 2fr;
+      gap: 18px;
+      margin-bottom: 24px;
+    }
+
+    .chart-card {
+      background: var(--card);
+      border-radius: 16px;
+      padding: 22px 24px;
+      border: 1px solid var(--border);
+      box-shadow: 0 4px 16px rgba(0,51,102,0.07);
+    }
+
+    .chart-card h3 {
+      margin: 0 0 16px;
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text);
+      font-family: system-ui, -apple-system, sans-serif;
+    }
+
+    .chart-wrap {
+      position: relative;
+      height: 220px;
+    }
+
+    /* ── Recent Transactions ── */
+    .recent-card {
+      background: var(--card);
+      border-radius: 16px;
+      padding: 22px 24px;
+      border: 1px solid var(--border);
+      box-shadow: 0 4px 16px rgba(0,51,102,0.07);
+    }
+
+    .recent-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .recent-header h3 {
+      margin: 0;
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text);
+      font-family: system-ui, -apple-system, sans-serif;
+    }
+
+    .see-all {
+      font-size: 13px;
+      color: var(--teal2);
+      text-decoration: none;
+      font-weight: 600;
+    }
+    .see-all:hover { color: var(--navy); }
+
+    .txn-list { display: flex; flex-direction: column; gap: 10px; }
+
+    .txn-item {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 10px 14px;
+      border-radius: 10px;
+      background: #f9fafb;
+      border: 1px solid #f1f5f9;
+    }
+
+    .txn-dot {
+      width: 36px; height: 36px;
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      font-size: 14px;
+    }
+    .txn-dot.income  { background: #e6f7ec; }
+    .txn-dot.expense { background: #ffe6e9; }
+
+    .txn-info { flex: 1; min-width: 0; }
+    .txn-info .txn-cat {
+      font-size: 14px; font-weight: 600; color: var(--text);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .txn-info .txn-date {
+      font-size: 12px; color: var(--muted);
+    }
+
+    .txn-amount {
+      font-size: 14px; font-weight: 700;
+      white-space: nowrap;
+    }
+    .txn-amount.income  { color: var(--green); }
+    .txn-amount.expense { color: var(--red); }
+
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+    .empty-state .empty-icon { font-size: 40px; margin-bottom: 8px; }
+
+    /* Skeleton loader */
+    .skeleton {
+      background: linear-gradient(90deg, #f0f0f0 25%, #e0e8f0 50%, #f0f0f0 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.2s infinite;
+      border-radius: 6px;
+    }
+    @keyframes shimmer {
+      0%   { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
+    .skeleton-val { height: 32px; width: 100px; margin: 4px 0; }
+    .skeleton-sub { height: 14px; width: 70px; }
+
+    @media (max-width: 720px) {
+      .summary-grid { grid-template-columns: 1fr; }
+      .charts-row   { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+
+<body>
+  <header class="heading">
+    <div class="left">
+      <h1 id="home_title">Personal Finance Tracker</h1>
+      <h3>Welcome back, {{ request.user.username|capfirst }}</h3>
+      <p>Your financial overview</p>
+    </div>
+    <div class="panel-btn">
+      <div class="buttons">
+        <a href="{% url 'home' %}"        class="button-link">Overview</a>
+        <a href="{% url 'accounts' %}"    class="button-link">Accounts</a>
+        <a href="{% url 'transaction' %}" class="button-link">Transactions</a>
+      </div>
+    </div>
+  </header>
+
+  <main>
+
+    <!-- ── Summary Cards ── -->
+    <div class="summary-grid">
+
+      <div class="summary-card balance">
+        <div class="card-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/>
+          </svg>
+        </div>
+        <div class="card-label">Net Balance</div>
+        <div class="card-value" id="val-balance"><span class="skeleton skeleton-val"></span></div>
+        <div class="card-sub" id="sub-balance"><span class="skeleton skeleton-sub"></span></div>
+      </div>
+
+      <div class="summary-card income">
+        <div class="card-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#0a7d35" stroke-width="2">
+            <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/>
+            <polyline points="17 6 23 6 23 12"/>
+          </svg>
+        </div>
+        <div class="card-label">Total Income</div>
+        <div class="card-value" id="val-income"><span class="skeleton skeleton-val"></span></div>
+        <div class="card-sub" id="sub-income"><span class="skeleton skeleton-sub"></span></div>
+      </div>
+
+      <div class="summary-card expense">
+        <div class="card-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#b00020" stroke-width="2">
+            <polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/>
+            <polyline points="17 18 23 18 23 12"/>
+          </svg>
+        </div>
+        <div class="card-label">Total Expenses</div>
+        <div class="card-value" id="val-expense"><span class="skeleton skeleton-val"></span></div>
+        <div class="card-sub" id="sub-expense"><span class="skeleton skeleton-sub"></span></div>
+      </div>
+
+    </div>
+
+    <!-- ── Charts ── -->
+    <div class="charts-row">
+      <div class="chart-card">
+        <h3>Income vs Expenses — Last 6 Months</h3>
+        <div class="chart-wrap">
+          <canvas id="lineChart"></canvas>
+        </div>
+      </div>
+      <div class="chart-card">
+        <h3>Expense Breakdown</h3>
+        <div class="chart-wrap">
+          <canvas id="pieChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Recent Transactions ── -->
+    <div class="recent-card">
+      <div class="recent-header">
+        <h3>Recent Transactions</h3>
+        <a href="{% url 'transaction' %}" class="see-all">See all →</a>
+      </div>
+      <div class="txn-list" id="recent-list">
+        <!-- populated by JS -->
+        <div class="txn-item" style="opacity:.4">
+          <div class="txn-dot"><span class="skeleton" style="width:36px;height:36px;border-radius:10px;"></span></div>
+          <div class="txn-info">
+            <div class="skeleton" style="height:14px;width:120px;margin-bottom:6px;"></div>
+            <div class="skeleton" style="height:12px;width:70px;"></div>
+          </div>
+          <div class="skeleton" style="height:16px;width:60px;"></div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <script>
+  (function () {
+    const INR = n => '₹' + Number(n).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+    // ── Palette ──
+    const PALETTE = [
+      '#003366','#00b89c','#e74c3c','#f39c12',
+      '#8e44ad','#2980b9','#16a085','#c0392b',
+    ];
+
+    // ── Merge two month series into a shared label set ──
+    function mergeMonths(incArr, expArr) {
+      const months = new Set([...incArr.map(d => d.month), ...expArr.map(d => d.month)]);
+      const sorted = Array.from(months).sort();
+      const incMap  = Object.fromEntries(incArr.map(d => [d.month, d.total]));
+      const expMap  = Object.fromEntries(expArr.map(d => [d.month, d.total]));
+      return {
+        labels:   sorted.map(m => { const [y,mo]=m.split('-'); return new Date(y,mo-1).toLocaleString('default',{month:'short',year:'2-digit'}); }),
+        incomes:  sorted.map(m => incMap[m]  || 0),
+        expenses: sorted.map(m => expMap[m] || 0),
+      };
+    }
+
+    let lineChart = null;
+    let pieChart  = null;
+
+    function buildLineChart(monthly_income, monthly_expense) {
+      const ctx = document.getElementById('lineChart');
+      if (!ctx) return;
+      if (lineChart) lineChart.destroy();
+
+      const { labels, incomes, expenses } = mergeMonths(monthly_income, monthly_expense);
+
+      if (!labels.length) {
+        ctx.parentElement.innerHTML = '<div class="empty-state"><div class="empty-icon">📈</div>No data yet</div>';
+        return;
+      }
+
+      lineChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [
+            {
+              label: 'Income',
+              data: incomes,
+              backgroundColor: 'rgba(10,125,53,0.15)',
+              borderColor: '#0a7d35',
+              borderWidth: 2,
+              borderRadius: 6,
+              type: 'bar',
+            },
+            {
+              label: 'Expenses',
+              data: expenses,
+              backgroundColor: 'rgba(176,0,32,0.12)',
+              borderColor: '#b00020',
+              borderWidth: 2,
+              borderRadius: 6,
+              type: 'bar',
+            },
+            {
+              label: 'Net',
+              data: incomes.map((inc, i) => inc - expenses[i]),
+              borderColor: '#003366',
+              backgroundColor: 'transparent',
+              borderWidth: 2.5,
+              pointRadius: 4,
+              pointBackgroundColor: '#003366',
+              tension: 0.4,
+              type: 'line',
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: { mode: 'index', intersect: false },
+          plugins: {
+            legend: { position: 'bottom', labels: { boxWidth: 12, padding: 16, font: { size: 12 } } },
+            tooltip: {
+              callbacks: {
+                label: ctx => ` ${ctx.dataset.label}: ${INR(ctx.parsed.y)}`,
+              },
+            },
+          },
+          scales: {
+            x: { grid: { display: false }, ticks: { font: { size: 11 } } },
+            y: {
+              grid: { color: 'rgba(0,0,0,0.05)' },
+              ticks: { font: { size: 11 }, callback: v => '₹' + v.toLocaleString('en-IN') },
+            },
+          },
+        },
+      });
+    }
+
+    function buildPieChart(cat_expenses) {
+      const ctx = document.getElementById('pieChart');
+      if (!ctx) return;
+      if (pieChart) pieChart.destroy();
+
+      if (!cat_expenses.length) {
+        ctx.parentElement.innerHTML = '<div class="empty-state"><div class="empty-icon">🍰</div>No expenses yet</div>';
+        return;
+      }
+
+      pieChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: cat_expenses.map(c => c.name),
+          datasets: [{
+            data: cat_expenses.map(c => c.total),
+            backgroundColor: PALETTE.slice(0, cat_expenses.length),
+            borderWidth: 2,
+            borderColor: '#fff',
+            hoverOffset: 6,
+          }],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          cutout: '58%',
+          plugins: {
+            legend: { position: 'bottom', labels: { boxWidth: 12, padding: 12, font: { size: 11 } } },
+            tooltip: {
+              callbacks: {
+                label: ctx => ` ${ctx.label}: ${INR(ctx.parsed)}`,
+              },
+            },
+          },
+        },
+      });
+    }
+
+    function buildRecent(txns) {
+      const list = document.getElementById('recent-list');
+      if (!list) return;
+      if (!txns.length) {
+        list.innerHTML = `<div class="empty-state"><div class="empty-icon">💸</div>No transactions yet.<br>Add one from the Transactions page.</div>`;
+        return;
+      }
+      list.innerHTML = txns.map(t => {
+        const sign  = t.type === 'income' ? '+' : '−';
+        const emoji = t.type === 'income' ? '💰' : '💸';
+        const d     = new Date(t.date);
+        const dateStr = d.toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' });
+        return `
+          <div class="txn-item">
+            <div class="txn-dot ${t.type}">${emoji}</div>
+            <div class="txn-info">
+              <div class="txn-cat">${t.category}</div>
+              <div class="txn-date">${dateStr} · ${t.account.charAt(0).toUpperCase()+t.account.slice(1)}</div>
             </div>
-            <div class="panel-btn">
-                <div class="buttons">
-                    <a href="{% url 'home' %}" class="button-link">Overview</a>
-                    <a href="{% url 'accounts' %}" class="button-link">Accounts</a>
-                    <a href="{% url 'transaction' %}" class="button-link">transactions</a>
+            <div class="txn-amount ${t.type}">${sign}${INR(t.amount)}</div>
+          </div>
+        `;
+      }).join('');
+    }
 
-                    <!-- <a href="settings.html" class="button-link" id="Settings">Settings</a> -->
-                </div>
-            </div>
-        </header>
-        <main>
-            <div class="summary_container">
-                <div class="cards">
-                    <b>Remaining</b>
-                </div>
-                <div class="cards">
-                    <b>Income</b>
-                </div>
-                <div class="cards">
-                    <b>Expenses</b>
-                </div>
-            </div>
-            <div class="charts-container">
-                <div class="line-chart">Line chart</div>
-                <div class="pie-chart">Pie chart</div>
+    async function loadSummary() {
+      try {
+        const res = await fetch('/api/summary/');
+        if (!res.ok) throw new Error();
+        const d = await res.json();
 
-            </div>
+        // Cards
+        document.getElementById('val-balance').textContent = INR(d.balance);
+        document.getElementById('val-income').textContent  = INR(d.total_income);
+        document.getElementById('val-expense').textContent = INR(d.total_expense);
 
-        </main>
+        const savingsRate = d.total_income > 0
+          ? ((d.total_income - d.total_expense) / d.total_income * 100).toFixed(1)
+          : 0;
 
-    </body>
+        document.getElementById('sub-balance').textContent  = `Savings rate: ${savingsRate}%`;
+        document.getElementById('sub-income').textContent   = 'All time';
+        document.getElementById('sub-expense').textContent  = 'All time';
 
+        buildLineChart(d.monthly_income, d.monthly_expense);
+        buildPieChart(d.category_expenses);
+        buildRecent(d.recent_transactions);
+
+      } catch {
+        ['val-balance','val-income','val-expense'].forEach(id => {
+          document.getElementById(id).textContent = 'Error';
+        });
+      }
+    }
+
+    loadSummary();
+  })();
+  </script>
+</body>
 </html>
