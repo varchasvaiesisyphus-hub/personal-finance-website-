@@ -7,7 +7,6 @@
   <link rel="stylesheet" href="{% static 'style.css' %}">
   <meta name="csrf-token" content="{{ csrf_token }}">
   <script src="{% static 'main.js' %}" defer></script>
-
   <title>Transactions</title>
 
   <style>
@@ -22,87 +21,44 @@
     }
 
     /* ── Profile Avatar ── */
-    .profile-wrapper {
-      position: relative;
-      display: inline-block;
-    }
-
+    .profile-wrapper { position:relative; display:inline-block; }
     .profile-avatar {
-      width: 38px;
-      height: 38px;
-      border-radius: 50%;
-      background: rgba(255,255,255,0.25);
-      border: 2px solid rgba(255,255,255,0.6);
-      color: #fff;
-      font-size: 15px;
-      font-weight: 700;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      font-family: system-ui, -apple-system, sans-serif;
-      transition: background 0.18s, transform 0.15s;
-      user-select: none;
-      text-transform: uppercase;
+      width:38px; height:38px; border-radius:50%;
+      background:rgba(255,255,255,0.25); border:2px solid rgba(255,255,255,0.6);
+      color:#fff; font-size:15px; font-weight:700;
+      display:flex; align-items:center; justify-content:center;
+      cursor:pointer; font-family:system-ui,-apple-system,sans-serif;
+      transition:background .18s,transform .15s; user-select:none; text-transform:uppercase;
     }
-    .profile-avatar:hover {
-      background: rgba(255,255,255,0.38);
-      transform: scale(1.06);
-    }
-
+    .profile-avatar:hover { background:rgba(255,255,255,0.38); transform:scale(1.06); }
     .profile-dropdown {
-      display: none;
-      position: absolute;
-      right: 0;
-      top: calc(100% + 10px);
-      min-width: 180px;
-      background: #fff;
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      box-shadow: 0 12px 36px rgba(0,51,102,0.14);
-      z-index: 1000;
-      overflow: hidden;
-      animation: dropIn 0.15s ease-out;
+      display:none; position:absolute; right:0; top:calc(100% + 10px);
+      min-width:180px; background:#fff; border:1px solid var(--border);
+      border-radius:12px; box-shadow:0 12px 36px rgba(0,51,102,0.14);
+      z-index:1000; overflow:hidden; animation:dropIn .15s ease-out;
     }
-    @keyframes dropIn {
-      from { opacity:0; transform: translateY(-6px); }
-      to   { opacity:1; transform: translateY(0); }
-    }
-    .profile-dropdown.open { display: block; }
-
-    .profile-dropdown-header {
-      padding: 14px 16px 10px;
-      border-bottom: 1px solid var(--border);
-    }
-    .profile-dropdown-header .pd-name {
-      font-size: 14px; font-weight: 700;
-      color: var(--text);
-      font-family: system-ui, -apple-system, sans-serif;
-    }
-    .profile-dropdown-header .pd-role {
-      font-size: 11px; color: var(--muted); margin-top: 1px;
-    }
-
+    @keyframes dropIn { from{opacity:0;transform:translateY(-6px)} to{opacity:1;transform:translateY(0)} }
+    .profile-dropdown.open { display:block; }
+    .profile-dropdown-header { padding:14px 16px 10px; border-bottom:1px solid var(--border); }
+    .profile-dropdown-header .pd-name { font-size:14px; font-weight:700; color:var(--text); font-family:system-ui,-apple-system,sans-serif; }
+    .profile-dropdown-header .pd-role { font-size:11px; color:var(--muted); margin-top:1px; }
     .profile-dropdown a {
-      display: flex; align-items: center; gap: 10px;
-      padding: 10px 16px;
-      font-size: 13px; color: var(--text);
-      text-decoration: none;
-      font-family: system-ui, -apple-system, sans-serif;
-      transition: background 0.12s;
+      display:flex; align-items:center; gap:10px; padding:10px 16px;
+      font-size:13px; color:var(--text); text-decoration:none;
+      font-family:system-ui,-apple-system,sans-serif; transition:background .12s;
     }
-    .profile-dropdown a:hover { background: #f3f4f6; }
-    .profile-dropdown a.logout { color: #b91c1c; border-top: 1px solid var(--border); }
-    .profile-dropdown a.logout:hover { background: #fff1f1; }
-    .profile-dropdown a svg { width: 15px; height: 15px; flex-shrink: 0; }
+    .profile-dropdown a:hover { background:#f3f4f6; }
+    .profile-dropdown a.logout { color:#b91c1c; border-top:1px solid var(--border); }
+    .profile-dropdown a.logout:hover { background:#fff1f1; }
+    .profile-dropdown a svg { width:15px; height:15px; flex-shrink:0; }
 
-    /* ── Controls bar ── */
+    /* ── Controls ── */
     .btn-row { display:flex; gap:8px; align-items:center; }
-    .btn-pg2 { padding:8px 14px; border-radius:8px; cursor:pointer; background:#00e6c3; border:none; font-weight:600; }
+    .btn-pg2 { padding:8px 14px; border-radius:8px; cursor:pointer; background:#00e6c3; border:none; font-weight:600; font-family:inherit; }
     .btn-pg2:hover { background:#25bda3; }
-    #deleteBtn { background:#ff6b6b; color:#fff; border:none; display:inline-flex; align-items:center; gap:6px; padding:8px 14px; border-radius:8px; cursor:pointer; font-weight:600; }
+    #deleteBtn { background:#ff6b6b; color:#fff; border:none; display:inline-flex; align-items:center; gap:6px; padding:8px 14px; border-radius:8px; cursor:pointer; font-weight:600; font-family:inherit; }
     #deleteBtn[disabled] { opacity:0.45; cursor:not-allowed; }
-    .select-cell     { text-align:center; width:64px; }
+    .select-cell { text-align:center; width:64px; }
     .row-checkbox    { width:18px; height:18px; cursor:pointer; }
     .header-checkbox { width:18px; height:18px; cursor:pointer; }
 
@@ -113,9 +69,7 @@
     .filter-left { display:flex; align-items:center; gap:10px; }
     .filter-left label { font-size:13px; font-weight:500; color:#374151; white-space:nowrap; }
     .filter-left .dropdown { width:170px; }
-    .filter-left .dropdown__button {
-      background:#f9fafb; border:1px solid #d1d5db; padding:7px 12px; font-size:14px;
-    }
+    .filter-left .dropdown__button { background:#f9fafb; border:1px solid #d1d5db; padding:7px 12px; font-size:14px; }
 
     tr[data-type="expense"] .amount-cell {
       color:#b00020; background-color:#ffe6e9;
@@ -126,7 +80,7 @@
       font-weight:600; padding:4px 10px; border-radius:6px; display:inline-block;
     }
 
-    /* Transfer modal */
+    /* ── Transfer Modal ── */
     #transfer-modal {
       position:fixed; inset:0; background:rgba(15,23,42,.45);
       display:flex; align-items:center; justify-content:center;
@@ -134,44 +88,46 @@
     }
     #transfer-modal[aria-hidden="true"] { display:none; }
     .transfer-dialog {
-      background:#fff; width:460px; max-width:95%; border-radius:16px;
+      background:#fff; width:480px; max-width:95%; border-radius:16px;
       padding:30px 28px; position:relative;
       box-shadow:0 25px 70px rgba(0,0,0,.15),0 10px 30px rgba(0,0,0,.08);
       font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
-      animation:tFade .18s ease-out;
+      animation:tFade .18s ease-out; max-height:90vh; overflow-y:auto;
     }
     @keyframes tFade {
       from{opacity:0;transform:translateY(10px) scale(.98)}
       to  {opacity:1;transform:translateY(0)    scale(1) }
     }
-    .transfer-dialog h3 { margin:0 0 4px; font-size:20px; font-weight:600; color:#111827; }
+    .transfer-dialog h3 { margin:0 0 2px; font-size:20px; font-weight:700; color:#111827; }
+    .t-subtitle { font-size:13px; color:#6b7280; margin:0 0 16px; }
     .transfer-dialog .close-x {
       position:absolute; right:18px; top:18px; border:none;
       background:transparent; font-size:20px; cursor:pointer; color:#6b7280;
     }
     .transfer-dialog .close-x:hover { color:#111827; }
 
-    .balance-strip { display:flex; gap:10px; margin:8px 0 20px; }
+    /* Three-column balance strip */
+    .balance-strip { display:flex; gap:8px; margin:0 0 20px; }
     .balance-chip {
       flex:1; display:flex; flex-direction:column; align-items:center;
-      padding:8px 12px; border-radius:10px; border:1px solid #e5e7eb; background:#f9fafb;
+      padding:8px 6px; border-radius:10px; border:1px solid #e5e7eb; background:#f9fafb;
     }
     .balance-chip .chip-label {
-      font-size:11px; color:#6b7280; font-weight:500;
+      font-size:10px; color:#6b7280; font-weight:600;
       text-transform:uppercase; letter-spacing:.04em;
     }
-    .balance-chip .chip-value { font-size:15px; font-weight:700; margin-top:2px; }
+    .balance-chip .chip-value { font-size:13px; font-weight:700; margin-top:2px; }
 
-    .t-row { display:flex; flex-direction:column; gap:6px; margin-bottom:16px; }
+    .t-row { display:flex; flex-direction:column; gap:6px; margin-bottom:14px; }
     .t-row label { font-size:13px; font-weight:500; color:#374151; }
     .t-row select,.t-row input {
-      padding:10px 12px; border-radius:8px; border:1px solid #d1d5db; font-size:14px;
+      padding:10px 12px; border-radius:8px; border:1px solid #d1d5db; font-size:14px; font-family:inherit;
     }
     .t-row select:focus,.t-row input:focus {
       outline:none; border-color:#2563eb; box-shadow:0 0 0 3px rgba(37,99,235,.12);
     }
     .t-actions { display:flex; justify-content:flex-end; gap:10px; margin-top:14px; }
-    .t-btn { padding:10px 16px; border-radius:8px; cursor:pointer; border:1px solid #d1d5db; background:#f3f4f6; font-weight:500; }
+    .t-btn { padding:10px 16px; border-radius:8px; cursor:pointer; border:1px solid #d1d5db; background:#f3f4f6; font-weight:500; font-family:inherit; }
     .t-btn:hover { background:#e5e7eb; }
     .t-btn-primary { background:#2563eb; color:#fff; border:none; }
     .t-btn-primary:hover { background:#1d4ed8; }
@@ -193,32 +149,23 @@
         <a href="{% url 'accounts' %}"    class="button-link">Accounts</a>
         <a href="{% url 'transaction' %}" class="button-link">Transactions</a>
       </div>
-      <!-- Profile Avatar -->
       <div class="profile-wrapper" id="profileWrapper">
-        <div class="profile-avatar" id="profileAvatar" title="Account">
-          {{ request.user.username|slice:":1"|upper }}
-        </div>
+        <div class="profile-avatar" id="profileAvatar">{{ request.user.username|slice:":1"|upper }}</div>
         <div class="profile-dropdown" id="profileDropdown">
           <div class="profile-dropdown-header">
             <div class="pd-name">{{ request.user.username|capfirst }}</div>
             <div class="pd-role">Personal Finance</div>
           </div>
           <a href="{% url 'home' %}">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
-            </svg>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
             Overview
           </a>
           <a href="{% url 'accounts' %}">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="3"/>
-            </svg>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="3"/></svg>
             Accounts
           </a>
-          <a href="#" class="logout" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
-            </svg>
+          <a href="#" class="logout" onclick="event.preventDefault();document.getElementById('logout-form').submit();">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
             Log out
           </a>
         </div>
@@ -226,9 +173,7 @@
     </div>
   </header>
 
-  <form id="logout-form" method="post" action="{% url 'logout' %}" style="display:none;">
-    {% csrf_token %}
-  </form>
+  <form id="logout-form" method="post" action="{% url 'logout' %}" style="display:none;">{% csrf_token %}</form>
   <form style="display:none;">{% csrf_token %}</form>
 
   <main class="main-box">
@@ -237,31 +182,24 @@
       <div class="filter-left">
         <label for="dropdownBtn">Filter:</label>
         <div class="dropdown" id="accountsDropdown">
-          <button id="dropdownBtn" class="dropdown__button"
-                  aria-haspopup="listbox" aria-expanded="false"
-                  aria-controls="accountsList" type="button">
+          <button id="dropdownBtn" class="dropdown__button" aria-haspopup="listbox" aria-expanded="false" aria-controls="accountsList" type="button">
             <span id="selectedLabel">All</span>
             <svg class="dropdown__arrow" viewBox="0 0 20 20" aria-hidden="true">
-              <path d="M5 7l5 5 5-5" fill="none" stroke="currentColor"
-                    stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M5 7l5 5 5-5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
           </button>
-          <ul id="accountsList" class="dropdown__list"
-              role="listbox" aria-labelledby="dropdownBtn" tabindex="-1">
+          <ul id="accountsList" class="dropdown__list" role="listbox" aria-labelledby="dropdownBtn" tabindex="-1">
             <li class="dropdown__option" role="option" tabindex="0"  data-value="all"     aria-selected="true">All</li>
             <li class="dropdown__option" role="option" tabindex="-1" data-value="income"  aria-selected="false">Income</li>
             <li class="dropdown__option" role="option" tabindex="-1" data-value="expense" aria-selected="false">Expenses</li>
           </ul>
         </div>
       </div>
-
       <div class="btn-row">
-        <button class="btn-pg2" id="transferBtn">Transfer</button>
+        <button class="btn-pg2" id="transferBtn">⇄ Transfer</button>
         <button class="btn-pg2" id="addNewBtn">+ Add New</button>
-        <button id="deleteBtn" aria-label="Delete selected transactions" disabled>
-          <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
-            <path fill="currentColor" d="M9 3v1H4v2h16V4h-5V3H9zm2 6v7h2V9h-2zM7 9v7h2V9H7zm8 0v7h2V9h-2z"/>
-          </svg>
+        <button id="deleteBtn" aria-label="Delete selected" disabled>
+          <svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentColor" d="M9 3v1H4v2h16V4h-5V3H9zm2 6v7h2V9h-2zM7 9v7h2V9H7zm8 0v7h2V9h-2z"/></svg>
           Delete
         </button>
       </div>
@@ -276,8 +214,7 @@
             <tr>
               <th>Date</th><th>Category</th><th>Amount</th><th>Account</th>
               <th class="select-cell">
-                <input type="checkbox" id="selectAllVisible" class="header-checkbox"
-                       aria-label="Select all visible transactions">
+                <input type="checkbox" id="selectAllVisible" class="header-checkbox" aria-label="Select all">
               </th>
             </tr>
           </thead>
@@ -288,40 +225,37 @@
               <td>{{ txn.category.name }}</td>
               <td><span class="amount-cell">{% if txn.type == 'income' %}+{% else %}−{% endif %}{{ txn.amount }}</span></td>
               <td>{{ txn.account|capfirst }}</td>
-              <td class="select-cell">
-                <input type="checkbox" class="row-checkbox" data-id="{{ txn.id }}"
-                       aria-label="Select transaction">
-              </td>
+              <td class="select-cell"><input type="checkbox" class="row-checkbox" data-id="{{ txn.id }}" aria-label="Select"></td>
             </tr>
             {% empty %}
-            <tr>
-              <td colspan="5" style="text-align:center;padding:24px;color:#6b7280;">
-                No transactions yet. Click <strong>+ Add New</strong> to get started.
-              </td>
-            </tr>
+            <tr><td colspan="5" style="text-align:center;padding:24px;color:#6b7280;">No transactions yet. Click <strong>+ Add New</strong> to get started.</td></tr>
             {% endfor %}
           </tbody>
         </table>
       </div>
     </div>
-
     <p class="hint">Use the filter to show only income or expenses. Select rows to delete them.</p>
   </main>
 
-  <!-- ── Transfer Modal ── -->
+  <!-- Transfer Modal -->
   <div id="transfer-modal" aria-hidden="true">
     <div class="transfer-dialog">
       <button class="close-x" id="transfer-close">&times;</button>
-      <h3>Transfer Between Accounts</h3>
+      <h3>Transfer Funds</h3>
+      <p class="t-subtitle">Move money between your accounts</p>
 
       <div class="balance-strip">
         <div class="balance-chip">
-          <span class="chip-label">Cash balance</span>
+          <span class="chip-label">Cash</span>
           <span class="chip-value" id="t-cash-balance">…</span>
         </div>
         <div class="balance-chip">
-          <span class="chip-label">Bank balance</span>
+          <span class="chip-label">Bank</span>
           <span class="chip-value" id="t-bank-balance">…</span>
+        </div>
+        <div class="balance-chip">
+          <span class="chip-label">Savings</span>
+          <span class="chip-value" id="t-savings-balance">…</span>
         </div>
       </div>
 
@@ -331,34 +265,31 @@
           <option value="">-- select account --</option>
           <option value="cash">Cash</option>
           <option value="bank">Bank</option>
+          <option value="savings">Savings</option>
         </select>
         <span class="t-err" id="t-from-err"></span>
       </div>
-
       <div class="t-row">
         <label for="t-to">To</label>
         <select id="t-to">
           <option value="">-- select account --</option>
           <option value="cash">Cash</option>
           <option value="bank">Bank</option>
+          <option value="savings">Savings</option>
         </select>
         <span class="t-err" id="t-to-err"></span>
       </div>
-
       <div class="t-row">
         <label for="t-amount">Amount</label>
         <input id="t-amount" type="number" step="0.01" min="0.01" placeholder="0.00" />
         <span class="t-err" id="t-amount-err"></span>
       </div>
-
       <div class="t-row">
         <label for="t-date">Date</label>
         <input id="t-date" type="date" />
         <span class="t-err" id="t-date-err"></span>
       </div>
-
       <div id="transfer-msg"></div>
-
       <div class="t-actions">
         <button class="t-btn t-btn-primary" id="transfer-submit">Transfer</button>
         <button class="t-btn" id="transfer-cancel">Cancel</button>
@@ -367,18 +298,11 @@
   </div>
 
   <script>
-    // ── Profile dropdown ──
     const wrapper  = document.getElementById('profileWrapper');
     const avatar   = document.getElementById('profileAvatar');
     const dropdown = document.getElementById('profileDropdown');
-
-    avatar.addEventListener('click', e => {
-      e.stopPropagation();
-      dropdown.classList.toggle('open');
-    });
-    document.addEventListener('click', e => {
-      if (!wrapper.contains(e.target)) dropdown.classList.remove('open');
-    });
+    avatar.addEventListener('click', e => { e.stopPropagation(); dropdown.classList.toggle('open'); });
+    document.addEventListener('click', e => { if (!wrapper.contains(e.target)) dropdown.classList.remove('open'); });
   </script>
 </body>
 </html>

@@ -5,270 +5,146 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="{% static 'style.css' %}">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <title>Overview — Personal Finance</title>
-
   <style>
     :root {
-      --navy:   #003366;
-      --teal:   #00e6c3;
-      --teal2:  #00b89c;
-      --red:    #b00020;
-      --green:  #0a7d35;
-      --bg:     #eef3f7;
-      --card:   #ffffff;
-      --border: #e5e7eb;
-      --muted:  #6b7280;
-      --text:   #111827;
+      --navy:#003366; --teal:#00e6c3; --teal2:#00b89c;
+      --red:#b00020; --green:#0a7d35;
+      --bg:#eef3f7; --card:#fff; --border:#e5e7eb; --muted:#6b7280; --text:#111827;
     }
+    main { max-width:960px; margin:0 auto; padding:28px 20px 48px; }
 
-    main { max-width: 960px; margin: 0 auto; padding: 28px 20px 48px; }
-
-    /* ── Profile Avatar ── */
-    .profile-wrapper {
-      position: relative;
-      display: inline-block;
-    }
-
+    /* Profile avatar */
+    .profile-wrapper { position:relative; display:inline-block; }
     .profile-avatar {
-      width: 38px;
-      height: 38px;
-      border-radius: 50%;
-      background: rgba(255,255,255,0.25);
-      border: 2px solid rgba(255,255,255,0.6);
-      color: #fff;
-      font-size: 15px;
-      font-weight: 700;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      font-family: system-ui, -apple-system, sans-serif;
-      transition: background 0.18s, transform 0.15s;
-      user-select: none;
-      text-transform: uppercase;
+      width:38px; height:38px; border-radius:50%;
+      background:rgba(255,255,255,.25); border:2px solid rgba(255,255,255,.6);
+      color:#fff; font-size:15px; font-weight:700;
+      display:flex; align-items:center; justify-content:center;
+      cursor:pointer; font-family:system-ui,sans-serif;
+      transition:background .18s,transform .15s; user-select:none; text-transform:uppercase;
     }
-    .profile-avatar:hover {
-      background: rgba(255,255,255,0.38);
-      transform: scale(1.06);
-    }
-
+    .profile-avatar:hover { background:rgba(255,255,255,.38); transform:scale(1.06); }
     .profile-dropdown {
-      display: none;
-      position: absolute;
-      right: 0;
-      top: calc(100% + 10px);
-      min-width: 180px;
-      background: #fff;
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      box-shadow: 0 12px 36px rgba(0,51,102,0.14);
-      z-index: 1000;
-      overflow: hidden;
-      animation: dropIn 0.15s ease-out;
+      display:none; position:absolute; right:0; top:calc(100% + 10px);
+      min-width:180px; background:#fff; border:1px solid var(--border);
+      border-radius:12px; box-shadow:0 12px 36px rgba(0,51,102,.14);
+      z-index:1000; overflow:hidden; animation:dropIn .15s ease-out;
     }
-    @keyframes dropIn {
-      from { opacity:0; transform: translateY(-6px); }
-      to   { opacity:1; transform: translateY(0); }
-    }
-    .profile-dropdown.open { display: block; }
-
-    .profile-dropdown-header {
-      padding: 14px 16px 10px;
-      border-bottom: 1px solid var(--border);
-    }
-    .profile-dropdown-header .pd-name {
-      font-size: 14px;
-      font-weight: 700;
-      color: var(--text);
-      font-family: system-ui, -apple-system, sans-serif;
-    }
-    .profile-dropdown-header .pd-role {
-      font-size: 11px;
-      color: var(--muted);
-      margin-top: 1px;
-    }
-
+    @keyframes dropIn { from{opacity:0;transform:translateY(-6px)} to{opacity:1;transform:translateY(0)} }
+    .profile-dropdown.open { display:block; }
+    .profile-dropdown-header { padding:14px 16px 10px; border-bottom:1px solid var(--border); }
+    .pd-name { font-size:14px; font-weight:700; color:var(--text); font-family:system-ui,sans-serif; }
+    .pd-role { font-size:11px; color:var(--muted); margin-top:1px; }
     .profile-dropdown a {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 10px 16px;
-      font-size: 13px;
-      color: var(--text);
-      text-decoration: none;
-      font-family: system-ui, -apple-system, sans-serif;
-      transition: background 0.12s;
+      display:flex; align-items:center; gap:10px; padding:10px 16px;
+      font-size:13px; color:var(--text); text-decoration:none;
+      font-family:system-ui,sans-serif; transition:background .12s;
     }
-    .profile-dropdown a:hover { background: #f3f4f6; }
-    .profile-dropdown a.logout {
-      color: #b91c1c;
-      border-top: 1px solid var(--border);
-    }
-    .profile-dropdown a.logout:hover { background: #fff1f1; }
-    .profile-dropdown a svg { width: 15px; height: 15px; flex-shrink: 0; }
+    .profile-dropdown a:hover { background:#f3f4f6; }
+    .profile-dropdown a.logout { color:#b91c1c; border-top:1px solid var(--border); }
+    .profile-dropdown a.logout:hover { background:#fff1f1; }
+    .profile-dropdown a svg { width:15px; height:15px; flex-shrink:0; }
 
-    /* ── Summary Cards ── */
-    .summary-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 18px;
-      margin-bottom: 28px;
-    }
-
+    /* Summary cards */
+    .summary-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:18px; margin-bottom:28px; }
     .summary-card {
-      background: var(--card);
-      border-radius: 16px;
-      padding: 22px 24px;
-      border: 1px solid var(--border);
-      box-shadow: 0 4px 16px rgba(0,51,102,0.07);
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      position: relative;
-      overflow: hidden;
-      transition: transform 0.18s, box-shadow 0.18s;
+      background:var(--card); border-radius:16px; padding:22px 24px;
+      border:1px solid var(--border); box-shadow:0 4px 16px rgba(0,51,102,.07);
+      display:flex; flex-direction:column; gap:6px; position:relative; overflow:hidden;
+      transition:transform .18s,box-shadow .18s;
     }
-    .summary-card:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 8px 28px rgba(0,51,102,0.12);
-    }
-
+    .summary-card:hover { transform:translateY(-3px); box-shadow:0 8px 28px rgba(0,51,102,.12); }
     .summary-card::before {
-      content: '';
-      position: absolute;
-      left: 0; top: 0; bottom: 0;
-      width: 5px;
-      border-radius: 16px 0 0 16px;
+      content:''; position:absolute; left:0; top:0; bottom:0; width:5px; border-radius:16px 0 0 16px;
     }
-    .summary-card.balance::before  { background: linear-gradient(180deg, #003366, #00e6c3); }
-    .summary-card.income::before   { background: var(--green); }
-    .summary-card.expense::before  { background: var(--red); }
+    .summary-card.balance::before { background:linear-gradient(180deg,#003366,#00e6c3); }
+    .summary-card.income::before  { background:var(--green); }
+    .summary-card.expense::before { background:var(--red); }
+    .card-icon { width:38px; height:38px; border-radius:10px; display:flex; align-items:center; justify-content:center; margin-bottom:4px; }
+    .balance .card-icon { background:linear-gradient(135deg,#003366,#00e6c3); }
+    .income  .card-icon { background:#e6f7ec; }
+    .expense .card-icon { background:#ffe6e9; }
+    .card-icon svg { width:18px; height:18px; }
+    .card-label { font-size:12px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:.05em; }
+    .card-value { font-size:26px; font-weight:800; font-family:system-ui,sans-serif; }
+    .balance .card-value { color:var(--navy); }
+    .income  .card-value { color:var(--green); }
+    .expense .card-value { color:var(--red); }
+    .card-sub { font-size:12px; color:var(--muted); }
 
-    .card-icon {
-      width: 38px; height: 38px;
-      border-radius: 10px;
-      display: flex; align-items: center; justify-content: center;
-      margin-bottom: 4px;
-    }
-    .balance .card-icon  { background: linear-gradient(135deg, #003366, #00e6c3); }
-    .income  .card-icon  { background: #e6f7ec; }
-    .expense .card-icon  { background: #ffe6e9; }
-    .card-icon svg { width: 18px; height: 18px; }
-
-    .card-label {
-      font-size: 12px; font-weight: 600; color: var(--muted);
-      text-transform: uppercase; letter-spacing: 0.05em;
-    }
-
-    .card-value {
-      font-size: 26px; font-weight: 800; color: var(--text);
-      font-family: system-ui, -apple-system, sans-serif;
-    }
-    .balance .card-value { color: var(--navy); }
-    .income  .card-value { color: var(--green); }
-    .expense .card-value { color: var(--red); }
-
-    .card-sub { font-size: 12px; color: var(--muted); }
-
-    /* ── Charts row ── */
-    .charts-row {
-      display: grid;
-      grid-template-columns: 3fr 2fr;
-      gap: 18px;
-      margin-bottom: 24px;
-    }
-
+    /* Charts */
+    .charts-row { display:grid; grid-template-columns:3fr 2fr; gap:18px; margin-bottom:24px; }
     .chart-card {
-      background: var(--card);
-      border-radius: 16px;
-      padding: 22px 24px;
-      border: 1px solid var(--border);
-      box-shadow: 0 4px 16px rgba(0,51,102,0.07);
+      background:var(--card); border-radius:16px; padding:22px 24px;
+      border:1px solid var(--border); box-shadow:0 4px 16px rgba(0,51,102,.07);
     }
-    .chart-card h3 {
-      margin: 0 0 16px;
-      font-size: 15px; font-weight: 700;
-      color: var(--text);
-      font-family: system-ui, -apple-system, sans-serif;
+    .chart-header {
+      display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;
     }
-    .chart-wrap { position: relative; height: 220px; }
+    .chart-header h3 { margin:0; font-size:15px; font-weight:700; color:var(--text); font-family:system-ui,sans-serif; }
+    .chart-wrap { position:relative; height:220px; }
 
-    /* ── Recent Transactions ── */
+    /* Period pill selector */
+    .period-pills {
+      display:inline-flex; gap:4px;
+      background:#f3f4f6; border-radius:8px; padding:3px;
+    }
+    .period-pill {
+      padding:4px 10px; border-radius:6px; font-size:12px; font-weight:600;
+      cursor:pointer; border:none; background:transparent; color:var(--muted);
+      font-family:system-ui,sans-serif; transition:background .15s,color .15s;
+      white-space:nowrap;
+    }
+    .period-pill:hover { color:var(--text); }
+    .period-pill.active { background:#fff; color:var(--navy); box-shadow:0 1px 4px rgba(0,0,0,.12); }
+
+    /* Recent */
     .recent-card {
-      background: var(--card);
-      border-radius: 16px;
-      padding: 22px 24px;
-      border: 1px solid var(--border);
-      box-shadow: 0 4px 16px rgba(0,51,102,0.07);
+      background:var(--card); border-radius:16px; padding:22px 24px;
+      border:1px solid var(--border); box-shadow:0 4px 16px rgba(0,51,102,.07);
     }
-    .recent-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 16px;
-    }
-    .recent-header h3 {
-      margin: 0;
-      font-size: 15px; font-weight: 700;
-      color: var(--text);
-      font-family: system-ui, -apple-system, sans-serif;
-    }
-    .see-all {
-      font-size: 13px; color: var(--teal2);
-      text-decoration: none; font-weight: 600;
-    }
-    .see-all:hover { color: var(--navy); }
-
-    .txn-list { display: flex; flex-direction: column; gap: 10px; }
+    .recent-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; }
+    .recent-header h3 { margin:0; font-size:15px; font-weight:700; color:var(--text); font-family:system-ui,sans-serif; }
+    .see-all { font-size:13px; color:var(--teal2); text-decoration:none; font-weight:600; }
+    .see-all:hover { color:var(--navy); }
+    .txn-list { display:flex; flex-direction:column; gap:10px; }
     .txn-item {
-      display: flex; align-items: center; gap: 14px;
-      padding: 10px 14px; border-radius: 10px;
-      background: #f9fafb; border: 1px solid #f1f5f9;
+      display:flex; align-items:center; gap:14px; padding:10px 14px;
+      border-radius:10px; background:#f9fafb; border:1px solid #f1f5f9;
     }
-    .txn-dot {
-      width: 36px; height: 36px; border-radius: 10px;
-      display: flex; align-items: center; justify-content: center;
-      flex-shrink: 0; font-size: 14px;
-    }
-    .txn-dot.income  { background: #e6f7ec; }
-    .txn-dot.expense { background: #ffe6e9; }
-    .txn-info { flex: 1; min-width: 0; }
-    .txn-info .txn-cat  { font-size: 14px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .txn-info .txn-date { font-size: 12px; color: var(--muted); }
-    .txn-amount { font-size: 14px; font-weight: 700; white-space: nowrap; }
-    .txn-amount.income  { color: var(--green); }
-    .txn-amount.expense { color: var(--red); }
+    .txn-dot { width:36px; height:36px; border-radius:10px; display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:14px; }
+    .txn-dot.income  { background:#e6f7ec; }
+    .txn-dot.expense { background:#ffe6e9; }
+    .txn-info { flex:1; min-width:0; }
+    .txn-cat  { font-size:14px; font-weight:600; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .txn-date { font-size:12px; color:var(--muted); }
+    .txn-amount { font-size:14px; font-weight:700; white-space:nowrap; }
+    .txn-amount.income  { color:var(--green); }
+    .txn-amount.expense { color:var(--red); }
 
-    .empty-state { text-align: center; padding: 40px 20px; color: var(--muted); font-size: 14px; }
-    .empty-state .empty-icon { font-size: 40px; margin-bottom: 8px; }
-
+    .empty-state { text-align:center; padding:40px 20px; color:var(--muted); font-size:14px; }
+    .empty-icon  { font-size:40px; margin-bottom:8px; }
     .skeleton {
-      background: linear-gradient(90deg, #f0f0f0 25%, #e0e8f0 50%, #f0f0f0 75%);
-      background-size: 200% 100%;
-      animation: shimmer 1.2s infinite;
-      border-radius: 6px;
+      background:linear-gradient(90deg,#f0f0f0 25%,#e0e8f0 50%,#f0f0f0 75%);
+      background-size:200% 100%; animation:shimmer 1.2s infinite; border-radius:6px;
     }
-    @keyframes shimmer {
-      0%   { background-position: 200% 0; }
-      100% { background-position: -200% 0; }
-    }
-    .skeleton-val { height: 32px; width: 100px; margin: 4px 0; }
-    .skeleton-sub { height: 14px; width: 70px; }
+    @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+    .skeleton-val { height:32px; width:100px; margin:4px 0; }
+    .skeleton-sub { height:14px; width:70px; }
 
-    @media (max-width: 720px) {
-      .summary-grid { grid-template-columns: 1fr; }
-      .charts-row   { grid-template-columns: 1fr; }
+    @media(max-width:720px) {
+      .summary-grid { grid-template-columns:1fr; }
+      .charts-row   { grid-template-columns:1fr; }
+      .period-pills { flex-wrap:wrap; }
     }
   </style>
 </head>
-
 <body>
   <header class="heading">
     <div class="left">
-      <h1 id="home_title">Personal Finance Tracker</h1>
+      <h1>Personal Finance Tracker</h1>
       <h3>Welcome back, {{ request.user.username|capfirst }}</h3>
       <p>Your financial overview</p>
     </div>
@@ -278,101 +154,71 @@
         <a href="{% url 'accounts' %}"    class="button-link">Accounts</a>
         <a href="{% url 'transaction' %}" class="button-link">Transactions</a>
       </div>
-      <!-- Profile Avatar -->
       <div class="profile-wrapper" id="profileWrapper">
-        <div class="profile-avatar" id="profileAvatar" title="Account">
-          {{ request.user.username|slice:":1"|upper }}
-        </div>
+        <div class="profile-avatar" id="profileAvatar">{{ request.user.username|slice:":1"|upper }}</div>
         <div class="profile-dropdown" id="profileDropdown">
           <div class="profile-dropdown-header">
             <div class="pd-name">{{ request.user.username|capfirst }}</div>
             <div class="pd-role">Personal Finance</div>
           </div>
-          <a href="{% url 'home' %}">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
-            </svg>
-            Overview
-          </a>
-          <a href="{% url 'accounts' %}">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="3"/>
-            </svg>
-            Accounts
-          </a>
-          <a href="{% url 'logout' %}" class="logout" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
-            </svg>
-            Log out
-          </a>
+          <a href="{% url 'home' %}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Overview</a>
+          <a href="{% url 'accounts' %}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="3"/></svg>Accounts</a>
+          <a href="{% url 'transaction' %}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>Transactions</a>
+          <a href="#" class="logout" onclick="event.preventDefault();document.getElementById('logout-form').submit();"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>Log out</a>
         </div>
       </div>
     </div>
   </header>
 
-  <!-- Hidden logout form for CSRF-safe POST -->
-  <form id="logout-form" method="post" action="{% url 'logout' %}" style="display:none;">
-    {% csrf_token %}
-  </form>
+  <form id="logout-form" method="post" action="{% url 'logout' %}" style="display:none;">{% csrf_token %}</form>
 
   <main>
-
-    <!-- ── Summary Cards ── -->
+    <!-- Summary Cards -->
     <div class="summary-grid">
       <div class="summary-card balance">
-        <div class="card-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2">
-            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/>
-          </svg>
-        </div>
+        <div class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
         <div class="card-label">Net Balance</div>
         <div class="card-value" id="val-balance"><span class="skeleton skeleton-val"></span></div>
-        <div class="card-sub" id="sub-balance"><span class="skeleton skeleton-sub"></span></div>
+        <div class="card-sub"  id="sub-balance"><span class="skeleton skeleton-sub"></span></div>
       </div>
-
       <div class="summary-card income">
-        <div class="card-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="#0a7d35" stroke-width="2">
-            <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/>
-            <polyline points="17 6 23 6 23 12"/>
-          </svg>
-        </div>
+        <div class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#0a7d35" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg></div>
         <div class="card-label">Total Income</div>
         <div class="card-value" id="val-income"><span class="skeleton skeleton-val"></span></div>
-        <div class="card-sub" id="sub-income"><span class="skeleton skeleton-sub"></span></div>
+        <div class="card-sub"  id="sub-income"><span class="skeleton skeleton-sub"></span></div>
       </div>
-
       <div class="summary-card expense">
-        <div class="card-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="#b00020" stroke-width="2">
-            <polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/>
-            <polyline points="17 18 23 18 23 12"/>
-          </svg>
-        </div>
+        <div class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#b00020" stroke-width="2"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/><polyline points="17 18 23 18 23 12"/></svg></div>
         <div class="card-label">Total Expenses</div>
         <div class="card-value" id="val-expense"><span class="skeleton skeleton-val"></span></div>
-        <div class="card-sub" id="sub-expense"><span class="skeleton skeleton-sub"></span></div>
+        <div class="card-sub"  id="sub-expense"><span class="skeleton skeleton-sub"></span></div>
       </div>
     </div>
 
-    <!-- ── Charts ── -->
+    <!-- Charts -->
     <div class="charts-row">
       <div class="chart-card">
-        <h3>Income vs Expenses — Last 6 Months</h3>
-        <div class="chart-wrap">
-          <canvas id="lineChart"></canvas>
+        <div class="chart-header">
+          <h3>Income vs Expenses</h3>
+          <div class="period-pills" id="periodPills">
+            <button class="period-pill" data-period="7d">7D</button>
+            <button class="period-pill" data-period="30d">30D</button>
+            <button class="period-pill" data-period="1m">1M</button>
+            <button class="period-pill active" data-period="6m">6M</button>
+            <button class="period-pill" data-period="1y">1Y</button>
+          </div>
         </div>
+        <div class="chart-wrap"><canvas id="lineChart"></canvas></div>
       </div>
       <div class="chart-card">
-        <h3>Expense Breakdown</h3>
-        <div class="chart-wrap">
-          <canvas id="pieChart"></canvas>
+        <div class="chart-header">
+          <h3>Expense Breakdown</h3>
         </div>
+        <div class="chart-wrap"><canvas id="pieChart"></canvas></div>
       </div>
     </div>
 
-    <!-- ── Recent Transactions ── -->
+    <!-- Recent Transactions -->
     <div class="recent-card">
       <div class="recent-header">
         <h3>Recent Transactions</h3>
@@ -380,7 +226,7 @@
       </div>
       <div class="txn-list" id="recent-list">
         <div class="txn-item" style="opacity:.4">
-          <div class="txn-dot"><span class="skeleton" style="width:36px;height:36px;border-radius:10px;"></span></div>
+          <div class="txn-dot"><span class="skeleton" style="width:36px;height:36px;border-radius:10px;display:block;"></span></div>
           <div class="txn-info">
             <div class="skeleton" style="height:14px;width:120px;margin-bottom:6px;"></div>
             <div class="skeleton" style="height:12px;width:70px;"></div>
@@ -389,56 +235,54 @@
         </div>
       </div>
     </div>
-
   </main>
 
   <script>
   (function () {
-    // ── Profile dropdown toggle ──
-    const wrapper  = document.getElementById('profileWrapper');
-    const avatar   = document.getElementById('profileAvatar');
-    const dropdown = document.getElementById('profileDropdown');
+    // Profile dropdown
+    const pw = document.getElementById('profileWrapper');
+    const pa = document.getElementById('profileAvatar');
+    const pd = document.getElementById('profileDropdown');
+    pa.addEventListener('click', e => { e.stopPropagation(); pd.classList.toggle('open'); });
+    document.addEventListener('click', e => { if (!pw.contains(e.target)) pd.classList.remove('open'); });
 
-    avatar.addEventListener('click', e => {
-      e.stopPropagation();
-      dropdown.classList.toggle('open');
-    });
-    document.addEventListener('click', e => {
-      if (!wrapper.contains(e.target)) dropdown.classList.remove('open');
-    });
+    const INR = n => '₹' + Number(n).toLocaleString('en-IN', {minimumFractionDigits:2, maximumFractionDigits:2});
+    const PALETTE = ['#003366','#00b89c','#e74c3c','#f39c12','#8e44ad','#2980b9','#16a085','#c0392b'];
 
-    // ── Chart helpers ──
-    const INR = n => '₹' + Number(n).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    let lineChart = null;
+    let pieChart  = null;
+    let activePeriod = '6m';
 
-    const PALETTE = [
-      '#003366','#00b89c','#e74c3c','#f39c12',
-      '#8e44ad','#2980b9','#16a085','#c0392b',
-    ];
+    // Format date label based on period
+    function fmtLabel(dateStr, period) {
+      const d = new Date(dateStr + 'T00:00:00');
+      if (period === '7d' || period === '30d' || period === '1m') {
+        return d.toLocaleDateString('default', {month:'short', day:'numeric'});
+      }
+      return d.toLocaleDateString('default', {month:'short', year:'2-digit'});
+    }
 
-    function mergeMonths(incArr, expArr) {
-      const months = new Set([...incArr.map(d => d.month), ...expArr.map(d => d.month)]);
-      const sorted = Array.from(months).sort();
-      const incMap = Object.fromEntries(incArr.map(d => [d.month, d.total]));
-      const expMap = Object.fromEntries(expArr.map(d => [d.month, d.total]));
+    function mergeMonths(incArr, expArr, period) {
+      const allDates = new Set([...incArr.map(d => d.month), ...expArr.map(d => d.month)]);
+      const sorted   = Array.from(allDates).sort();
+      const incMap   = Object.fromEntries(incArr.map(d => [d.month, d.total]));
+      const expMap   = Object.fromEntries(expArr.map(d => [d.month, d.total]));
       return {
-        labels:   sorted.map(m => { const [y,mo]=m.split('-'); return new Date(y,mo-1).toLocaleString('default',{month:'short',year:'2-digit'}); }),
+        labels:   sorted.map(m => fmtLabel(m, period)),
         incomes:  sorted.map(m => incMap[m] || 0),
         expenses: sorted.map(m => expMap[m] || 0),
       };
     }
 
-    let lineChart = null;
-    let pieChart  = null;
-
-    function buildLineChart(monthly_income, monthly_expense) {
+    function buildLineChart(monthly_income, monthly_expense, period) {
       const ctx = document.getElementById('lineChart');
       if (!ctx) return;
       if (lineChart) lineChart.destroy();
 
-      const { labels, incomes, expenses } = mergeMonths(monthly_income, monthly_expense);
+      const { labels, incomes, expenses } = mergeMonths(monthly_income, monthly_expense, period);
 
       if (!labels.length) {
-        ctx.parentElement.innerHTML = '<div class="empty-state"><div class="empty-icon">📈</div>No data yet</div>';
+        ctx.parentElement.innerHTML = '<div class="empty-state"><div class="empty-icon">📈</div>No data for this period</div>';
         return;
       }
 
@@ -453,11 +297,8 @@
               borderColor: '#0a7d35',
               backgroundColor: 'rgba(10,125,53,0.10)',
               borderWidth: 2.5,
-              pointRadius: 4,
-              pointBackgroundColor: '#0a7d35',
-              pointHoverRadius: 6,
-              tension: 0.4,
-              fill: true,
+              pointRadius: 4, pointBackgroundColor: '#0a7d35', pointHoverRadius: 6,
+              tension: 0.4, fill: true,
             },
             {
               label: 'Expenses',
@@ -465,42 +306,32 @@
               borderColor: '#b00020',
               backgroundColor: 'rgba(176,0,32,0.08)',
               borderWidth: 2.5,
-              pointRadius: 4,
-              pointBackgroundColor: '#b00020',
-              pointHoverRadius: 6,
-              tension: 0.4,
-              fill: true,
+              pointRadius: 4, pointBackgroundColor: '#b00020', pointHoverRadius: 6,
+              tension: 0.4, fill: true,
             },
             {
               label: 'Net',
               data: incomes.map((inc, i) => inc - expenses[i]),
               borderColor: '#003366',
               backgroundColor: 'transparent',
-              borderWidth: 2,
-              borderDash: [5, 4],
-              pointRadius: 3,
-              pointBackgroundColor: '#003366',
-              pointHoverRadius: 5,
-              tension: 0.4,
-              fill: false,
+              borderWidth: 2, borderDash: [5,4],
+              pointRadius: 3, pointBackgroundColor: '#003366', pointHoverRadius: 5,
+              tension: 0.4, fill: false,
             },
           ],
         },
         options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          interaction: { mode: 'index', intersect: false },
+          responsive: true, maintainAspectRatio: false,
+          interaction: { mode:'index', intersect:false },
           plugins: {
-            legend: { position: 'bottom', labels: { boxWidth: 12, padding: 16, font: { size: 12 } } },
-            tooltip: {
-              callbacks: { label: ctx => ` ${ctx.dataset.label}: ${INR(ctx.parsed.y)}` },
-            },
+            legend: { position:'bottom', labels:{ boxWidth:12, padding:16, font:{size:12} } },
+            tooltip: { callbacks:{ label: ctx => ` ${ctx.dataset.label}: ${INR(ctx.parsed.y)}` } },
           },
           scales: {
-            x: { grid: { display: false }, ticks: { font: { size: 11 } } },
+            x: { grid:{display:false}, ticks:{font:{size:11}} },
             y: {
-              grid: { color: 'rgba(0,0,0,0.05)' },
-              ticks: { font: { size: 11 }, callback: v => '₹' + v.toLocaleString('en-IN') },
+              grid:{color:'rgba(0,0,0,0.05)'},
+              ticks:{font:{size:11}, callback: v => '₹' + v.toLocaleString('en-IN')},
             },
           },
         },
@@ -511,31 +342,21 @@
       const ctx = document.getElementById('pieChart');
       if (!ctx) return;
       if (pieChart) pieChart.destroy();
-
       if (!cat_expenses.length) {
         ctx.parentElement.innerHTML = '<div class="empty-state"><div class="empty-icon">🍰</div>No expenses yet</div>';
         return;
       }
-
       pieChart = new Chart(ctx, {
         type: 'doughnut',
         data: {
           labels: cat_expenses.map(c => c.name),
-          datasets: [{
-            data: cat_expenses.map(c => c.total),
-            backgroundColor: PALETTE.slice(0, cat_expenses.length),
-            borderWidth: 2,
-            borderColor: '#fff',
-            hoverOffset: 6,
-          }],
+          datasets: [{ data: cat_expenses.map(c => c.total), backgroundColor: PALETTE.slice(0, cat_expenses.length), borderWidth:2, borderColor:'#fff', hoverOffset:6 }],
         },
         options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          cutout: '58%',
+          responsive:true, maintainAspectRatio:false, cutout:'58%',
           plugins: {
-            legend: { position: 'bottom', labels: { boxWidth: 12, padding: 12, font: { size: 11 } } },
-            tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ${INR(ctx.parsed)}` } },
+            legend:{ position:'bottom', labels:{ boxWidth:12, padding:12, font:{size:11} } },
+            tooltip:{ callbacks:{ label: ctx => ` ${ctx.label}: ${INR(ctx.parsed)}` } },
           },
         },
       });
@@ -545,30 +366,33 @@
       const list = document.getElementById('recent-list');
       if (!list) return;
       if (!txns.length) {
-        list.innerHTML = `<div class="empty-state"><div class="empty-icon">💸</div>No transactions yet.<br>Add one from the Transactions page.</div>`;
+        list.innerHTML = `<div class="empty-state"><div class="empty-icon">💸</div>No transactions yet.</div>`;
         return;
       }
       list.innerHTML = txns.map(t => {
         const sign  = t.type === 'income' ? '+' : '−';
         const emoji = t.type === 'income' ? '💰' : '💸';
         const d     = new Date(t.date);
-        const dateStr = d.toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' });
-        return `
-          <div class="txn-item">
-            <div class="txn-dot ${t.type}">${emoji}</div>
-            <div class="txn-info">
-              <div class="txn-cat">${t.category}</div>
-              <div class="txn-date">${dateStr} · ${t.account.charAt(0).toUpperCase()+t.account.slice(1)}</div>
-            </div>
-            <div class="txn-amount ${t.type}">${sign}${INR(t.amount)}</div>
+        const ds    = d.toLocaleDateString('en-IN', {day:'numeric', month:'short', year:'numeric'});
+        return `<div class="txn-item">
+          <div class="txn-dot ${t.type}">${emoji}</div>
+          <div class="txn-info">
+            <div class="txn-cat">${t.category}</div>
+            <div class="txn-date">${ds} · ${t.account.charAt(0).toUpperCase()+t.account.slice(1)}</div>
           </div>
-        `;
+          <div class="txn-amount ${t.type}">${sign}${INR(t.amount)}</div>
+        </div>`;
       }).join('');
     }
 
-    async function loadSummary() {
+    async function loadSummary(period) {
+      // Reset line chart area to avoid stale canvas
+      const lineWrap = document.getElementById('lineChart')?.parentElement;
+      if (lineChart) { lineChart.destroy(); lineChart = null; }
+      if (lineWrap) lineWrap.innerHTML = '<canvas id="lineChart"></canvas>';
+
       try {
-        const res = await fetch('/api/summary/');
+        const res = await fetch(`/api/summary/?period=${period}`);
         if (!res.ok) throw new Error();
         const d = await res.json();
 
@@ -576,18 +400,15 @@
         document.getElementById('val-income').textContent  = INR(d.total_income);
         document.getElementById('val-expense').textContent = INR(d.total_expense);
 
-        const savingsRate = d.total_income > 0
-          ? ((d.total_income - d.total_expense) / d.total_income * 100).toFixed(1)
-          : 0;
+        const sr = d.total_income > 0
+          ? ((d.total_income - d.total_expense) / d.total_income * 100).toFixed(1) : 0;
+        document.getElementById('sub-balance').textContent  = `Savings rate: ${sr}%`;
+        document.getElementById('sub-income').textContent   = 'All time';
+        document.getElementById('sub-expense').textContent  = 'All time';
 
-        document.getElementById('sub-balance').textContent = `Savings rate: ${savingsRate}%`;
-        document.getElementById('sub-income').textContent  = 'All time';
-        document.getElementById('sub-expense').textContent = 'All time';
-
-        buildLineChart(d.monthly_income, d.monthly_expense);
+        buildLineChart(d.monthly_income, d.monthly_expense, period);
         buildPieChart(d.category_expenses);
         buildRecent(d.recent_transactions);
-
       } catch {
         ['val-balance','val-income','val-expense'].forEach(id => {
           document.getElementById(id).textContent = 'Error';
@@ -595,7 +416,17 @@
       }
     }
 
-    loadSummary();
+    // Period pill wiring
+    document.getElementById('periodPills').addEventListener('click', e => {
+      const pill = e.target.closest('.period-pill');
+      if (!pill) return;
+      document.querySelectorAll('.period-pill').forEach(p => p.classList.remove('active'));
+      pill.classList.add('active');
+      activePeriod = pill.dataset.period;
+      loadSummary(activePeriod);
+    });
+
+    loadSummary(activePeriod);
   })();
   </script>
 </body>
