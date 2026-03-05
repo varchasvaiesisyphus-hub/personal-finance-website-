@@ -26,6 +26,81 @@
 
     main { max-width: 960px; margin: 0 auto; padding: 28px 20px 48px; }
 
+    /* ── Profile Avatar ── */
+    .profile-wrapper {
+      position: relative;
+      display: inline-block;
+    }
+
+    .profile-avatar {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.25);
+      border: 2px solid rgba(255,255,255,0.6);
+      color: #fff;
+      font-size: 15px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-family: system-ui, -apple-system, sans-serif;
+      transition: background 0.18s, transform 0.15s;
+      user-select: none;
+      text-transform: uppercase;
+    }
+    .profile-avatar:hover {
+      background: rgba(255,255,255,0.38);
+      transform: scale(1.06);
+    }
+
+    .profile-dropdown {
+      display: none;
+      position: absolute;
+      right: 0;
+      top: calc(100% + 10px);
+      min-width: 180px;
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      box-shadow: 0 12px 36px rgba(0,51,102,0.14);
+      z-index: 1000;
+      overflow: hidden;
+      animation: dropIn 0.15s ease-out;
+    }
+    @keyframes dropIn {
+      from { opacity:0; transform: translateY(-6px); }
+      to   { opacity:1; transform: translateY(0); }
+    }
+    .profile-dropdown.open { display: block; }
+
+    .profile-dropdown-header {
+      padding: 14px 16px 10px;
+      border-bottom: 1px solid var(--border);
+    }
+    .profile-dropdown-header .pd-name {
+      font-size: 14px; font-weight: 700;
+      color: var(--text);
+      font-family: system-ui, -apple-system, sans-serif;
+    }
+    .profile-dropdown-header .pd-role {
+      font-size: 11px; color: var(--muted); margin-top: 1px;
+    }
+
+    .profile-dropdown a {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 16px;
+      font-size: 13px; color: var(--text);
+      text-decoration: none;
+      font-family: system-ui, -apple-system, sans-serif;
+      transition: background 0.12s;
+    }
+    .profile-dropdown a:hover { background: #f3f4f6; }
+    .profile-dropdown a.logout { color: #b91c1c; border-top: 1px solid var(--border); }
+    .profile-dropdown a.logout:hover { background: #fff1f1; }
+    .profile-dropdown a svg { width: 15px; height: 15px; flex-shrink: 0; }
+
     /* ── Account Selector Tabs ── */
     .account-tabs {
       display: flex;
@@ -34,29 +109,21 @@
     }
 
     .acc-tab {
-      display: flex;
-      align-items: center;
-      gap: 10px;
+      display: flex; align-items: center; gap: 10px;
       padding: 12px 24px;
       border-radius: 12px;
       border: 2px solid var(--border);
       background: var(--card);
       cursor: pointer;
-      font-size: 15px;
-      font-weight: 600;
-      color: var(--muted);
+      font-size: 15px; font-weight: 600; color: var(--muted);
       font-family: inherit;
       transition: all 0.18s;
       box-shadow: 0 2px 8px rgba(0,51,102,0.04);
     }
-    .acc-tab:hover {
-      border-color: var(--teal2);
-      color: var(--navy);
-    }
+    .acc-tab:hover { border-color: var(--teal2); color: var(--navy); }
     .acc-tab.active {
       background: linear-gradient(135deg, #003366, #00b89c);
-      border-color: transparent;
-      color: #fff;
+      border-color: transparent; color: #fff;
       box-shadow: 0 4px 16px rgba(0,184,156,0.30);
     }
     .acc-tab svg { width: 20px; height: 20px; flex-shrink: 0; }
@@ -75,30 +142,20 @@
       padding: 20px 22px;
       border: 1px solid var(--border);
       box-shadow: 0 4px 14px rgba(0,51,102,0.07);
-      position: relative;
-      overflow: hidden;
+      position: relative; overflow: hidden;
       transition: transform 0.18s, box-shadow 0.18s;
     }
-    .stat-card:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 24px rgba(0,51,102,0.11);
-    }
-
+    .stat-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,51,102,0.11); }
     .stat-card::after {
-      content: '';
-      position: absolute;
-      right: -12px; bottom: -12px;
-      width: 64px; height: 64px;
-      border-radius: 50%;
-      opacity: 0.08;
+      content: ''; position: absolute; right: -12px; bottom: -12px;
+      width: 64px; height: 64px; border-radius: 50%; opacity: 0.08;
     }
     .stat-card.inflow::after  { background: var(--green); }
     .stat-card.outflow::after { background: var(--red); }
     .stat-card.balance::after { background: var(--navy); }
 
     .stat-icon {
-      width: 36px; height: 36px;
-      border-radius: 10px;
+      width: 36px; height: 36px; border-radius: 10px;
       display: flex; align-items: center; justify-content: center;
       margin-bottom: 10px;
     }
@@ -109,8 +166,7 @@
 
     .stat-label {
       font-size: 11px; font-weight: 700; color: var(--muted);
-      text-transform: uppercase; letter-spacing: 0.05em;
-      margin-bottom: 4px;
+      text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;
     }
     .stat-value {
       font-size: 24px; font-weight: 800;
@@ -129,9 +185,7 @@
     }
 
     .chart-card {
-      background: var(--card);
-      border-radius: 14px;
-      padding: 20px 22px;
+      background: var(--card); border-radius: 14px; padding: 20px 22px;
       border: 1px solid var(--border);
       box-shadow: 0 4px 14px rgba(0,51,102,0.07);
     }
@@ -145,9 +199,7 @@
 
     /* ── Recent list ── */
     .recent-card {
-      background: var(--card);
-      border-radius: 14px;
-      padding: 20px 22px;
+      background: var(--card); border-radius: 14px; padding: 20px 22px;
       border: 1px solid var(--border);
       box-shadow: 0 4px 14px rgba(0,51,102,0.07);
     }
@@ -159,14 +211,10 @@
       margin: 0; font-size: 14px; font-weight: 700;
       color: var(--text); font-family: system-ui, -apple-system, sans-serif;
     }
-    .see-all {
-      font-size: 12px; color: var(--teal2);
-      text-decoration: none; font-weight: 600;
-    }
+    .see-all { font-size: 12px; color: var(--teal2); text-decoration: none; font-weight: 600; }
     .see-all:hover { color: var(--navy); }
 
     .txn-list { display: flex; flex-direction: column; gap: 8px; }
-
     .txn-item {
       display: flex; align-items: center; gap: 12px;
       padding: 9px 12px; border-radius: 9px;
@@ -186,13 +234,9 @@
     .txn-amount.income  { color: var(--green); }
     .txn-amount.expense { color: var(--red); }
 
-    .empty-state {
-      text-align: center; padding: 32px 20px;
-      color: var(--muted); font-size: 13px;
-    }
-    .empty-icon { font-size: 32px; margin-bottom: 6px; }
+    .empty-state { text-align: center; padding: 32px 20px; color: var(--muted); font-size: 13px; }
+    .empty-icon  { font-size: 32px; margin-bottom: 6px; }
 
-    /* Skeleton */
     .skeleton {
       background: linear-gradient(90deg, #f0f0f0 25%, #e0e8f0 50%, #f0f0f0 75%);
       background-size: 200% 100%;
@@ -204,19 +248,16 @@
       100% { background-position: -200% 0; }
     }
 
-    /* Loading overlay on chart */
     .chart-loading {
       position: absolute; inset: 0;
       display: flex; align-items: center; justify-content: center;
       background: rgba(255,255,255,0.85);
-      border-radius: 8px;
-      font-size: 13px; color: var(--muted);
-      z-index: 2;
+      border-radius: 8px; font-size: 13px; color: var(--muted); z-index: 2;
     }
 
     @media (max-width: 720px) {
-      .stats-grid { grid-template-columns: 1fr; }
-      .charts-row { grid-template-columns: 1fr; }
+      .stats-grid   { grid-template-columns: 1fr; }
+      .charts-row   { grid-template-columns: 1fr; }
       .account-tabs { flex-direction: column; }
     }
   </style>
@@ -235,8 +276,44 @@
         <a href="{% url 'accounts' %}"    class="button-link">Accounts</a>
         <a href="{% url 'transaction' %}" class="button-link">Transactions</a>
       </div>
+      <!-- Profile Avatar -->
+      <div class="profile-wrapper" id="profileWrapper">
+        <div class="profile-avatar" id="profileAvatar" title="Account">
+          {{ request.user.username|slice:":1"|upper }}
+        </div>
+        <div class="profile-dropdown" id="profileDropdown">
+          <div class="profile-dropdown-header">
+            <div class="pd-name">{{ request.user.username|capfirst }}</div>
+            <div class="pd-role">Personal Finance</div>
+          </div>
+          <a href="{% url 'home' %}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
+            </svg>
+            Overview
+          </a>
+          <a href="{% url 'transaction' %}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/>
+              <line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/>
+              <line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>
+            </svg>
+            Transactions
+          </a>
+          <a href="#" class="logout" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
+            </svg>
+            Log out
+          </a>
+        </div>
+      </div>
     </div>
   </header>
+
+  <form id="logout-form" method="post" action="{% url 'logout' %}" style="display:none;">
+    {% csrf_token %}
+  </form>
 
   <main>
 
@@ -327,6 +404,20 @@
 
   <script>
   (function () {
+    // ── Profile dropdown ──
+    const wrapper  = document.getElementById('profileWrapper');
+    const avatar   = document.getElementById('profileAvatar');
+    const dropdown = document.getElementById('profileDropdown');
+
+    avatar.addEventListener('click', e => {
+      e.stopPropagation();
+      dropdown.classList.toggle('open');
+    });
+    document.addEventListener('click', e => {
+      if (!wrapper.contains(e.target)) dropdown.classList.remove('open');
+    });
+
+    // ── Chart helpers ──
     const INR = n => '₹' + Number(n).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
     const PALETTE = [
@@ -341,11 +432,11 @@
     function mergeMonths(incArr, expArr) {
       const months = new Set([...incArr.map(d => d.month), ...expArr.map(d => d.month)]);
       const sorted = Array.from(months).sort();
-      const incMap  = Object.fromEntries(incArr.map(d => [d.month, d.total]));
-      const expMap  = Object.fromEntries(expArr.map(d => [d.month, d.total]));
+      const incMap = Object.fromEntries(incArr.map(d => [d.month, d.total]));
+      const expMap = Object.fromEntries(expArr.map(d => [d.month, d.total]));
       return {
         labels:   sorted.map(m => { const [y,mo]=m.split('-'); return new Date(y,mo-1).toLocaleString('default',{month:'short',year:'2-digit'}); }),
-        incomes:  sorted.map(m => incMap[m]  || 0),
+        incomes:  sorted.map(m => incMap[m] || 0),
         expenses: sorted.map(m => expMap[m] || 0),
       };
     }
@@ -365,25 +456,33 @@
       }
 
       lineChart = new Chart(ctx, {
-        type: 'bar',
+        type: 'line',
         data: {
           labels,
           datasets: [
             {
               label: 'Inflow',
               data: incomes,
-              backgroundColor: 'rgba(10,125,53,0.15)',
               borderColor: '#0a7d35',
-              borderWidth: 2,
-              borderRadius: 5,
+              backgroundColor: 'rgba(10,125,53,0.10)',
+              borderWidth: 2.5,
+              pointRadius: 4,
+              pointBackgroundColor: '#0a7d35',
+              pointHoverRadius: 6,
+              tension: 0.4,
+              fill: true,
             },
             {
               label: 'Outflow',
               data: expenses,
-              backgroundColor: 'rgba(176,0,32,0.12)',
               borderColor: '#b00020',
-              borderWidth: 2,
-              borderRadius: 5,
+              backgroundColor: 'rgba(176,0,32,0.08)',
+              borderWidth: 2.5,
+              pointRadius: 4,
+              pointBackgroundColor: '#b00020',
+              pointHoverRadius: 6,
+              tension: 0.4,
+              fill: true,
             },
           ],
         },
@@ -393,9 +492,7 @@
           interaction: { mode: 'index', intersect: false },
           plugins: {
             legend: { position: 'bottom', labels: { boxWidth: 12, padding: 14, font: { size: 11 } } },
-            tooltip: {
-              callbacks: { label: ctx => ` ${ctx.dataset.label}: ${INR(ctx.parsed.y)}` },
-            },
+            tooltip: { callbacks: { label: ctx => ` ${ctx.dataset.label}: ${INR(ctx.parsed.y)}` } },
           },
           scales: {
             x: { grid: { display: false }, ticks: { font: { size: 11 } } },
@@ -427,9 +524,7 @@
           datasets: [{
             data: cat_expenses.map(c => c.total),
             backgroundColor: PALETTE.slice(0, cat_expenses.length),
-            borderWidth: 2,
-            borderColor: '#fff',
-            hoverOffset: 5,
+            borderWidth: 2, borderColor: '#fff', hoverOffset: 5,
           }],
         },
         options: {
@@ -438,9 +533,7 @@
           cutout: '55%',
           plugins: {
             legend: { position: 'bottom', labels: { boxWidth: 10, padding: 10, font: { size: 11 } } },
-            tooltip: {
-              callbacks: { label: ctx => ` ${ctx.label}: ${INR(ctx.parsed)}` },
-            },
+            tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ${INR(ctx.parsed)}` } },
           },
         },
       });
@@ -472,13 +565,11 @@
     }
 
     async function loadAccount(account) {
-      // Reset charts to loading state
       ['line-loading','pie-loading'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.style.display = 'flex';
       });
 
-      // Skeleton for stats
       ['val-inflow','val-outflow','val-balance'].forEach(id => {
         document.getElementById(id).innerHTML = '<span class="skeleton" style="height:28px;width:90px;display:block;"></span>';
       });
@@ -486,7 +577,6 @@
       document.getElementById('recent-list').innerHTML =
         '<div class="empty-state"><span class="skeleton" style="height:14px;width:180px;display:inline-block;"></span></div>';
 
-      // Update titles
       const name = account.charAt(0).toUpperCase() + account.slice(1);
       document.getElementById('line-title').textContent   = `${name} — Income vs Expenses (6 months)`;
       document.getElementById('pie-title').textContent    = `${name} — Expense Breakdown`;
@@ -521,7 +611,6 @@
       });
     });
 
-    // Initial load
     loadAccount('cash');
   })();
   </script>

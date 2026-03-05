@@ -11,7 +11,6 @@
   <title>Overview — Personal Finance</title>
 
   <style>
-    /* ── Overview-specific styles ── */
     :root {
       --navy:   #003366;
       --teal:   #00e6c3;
@@ -26,6 +25,90 @@
     }
 
     main { max-width: 960px; margin: 0 auto; padding: 28px 20px 48px; }
+
+    /* ── Profile Avatar ── */
+    .profile-wrapper {
+      position: relative;
+      display: inline-block;
+    }
+
+    .profile-avatar {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.25);
+      border: 2px solid rgba(255,255,255,0.6);
+      color: #fff;
+      font-size: 15px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-family: system-ui, -apple-system, sans-serif;
+      transition: background 0.18s, transform 0.15s;
+      user-select: none;
+      text-transform: uppercase;
+    }
+    .profile-avatar:hover {
+      background: rgba(255,255,255,0.38);
+      transform: scale(1.06);
+    }
+
+    .profile-dropdown {
+      display: none;
+      position: absolute;
+      right: 0;
+      top: calc(100% + 10px);
+      min-width: 180px;
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      box-shadow: 0 12px 36px rgba(0,51,102,0.14);
+      z-index: 1000;
+      overflow: hidden;
+      animation: dropIn 0.15s ease-out;
+    }
+    @keyframes dropIn {
+      from { opacity:0; transform: translateY(-6px); }
+      to   { opacity:1; transform: translateY(0); }
+    }
+    .profile-dropdown.open { display: block; }
+
+    .profile-dropdown-header {
+      padding: 14px 16px 10px;
+      border-bottom: 1px solid var(--border);
+    }
+    .profile-dropdown-header .pd-name {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text);
+      font-family: system-ui, -apple-system, sans-serif;
+    }
+    .profile-dropdown-header .pd-role {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 1px;
+    }
+
+    .profile-dropdown a {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 16px;
+      font-size: 13px;
+      color: var(--text);
+      text-decoration: none;
+      font-family: system-ui, -apple-system, sans-serif;
+      transition: background 0.12s;
+    }
+    .profile-dropdown a:hover { background: #f3f4f6; }
+    .profile-dropdown a.logout {
+      color: #b91c1c;
+      border-top: 1px solid var(--border);
+    }
+    .profile-dropdown a.logout:hover { background: #fff1f1; }
+    .profile-dropdown a svg { width: 15px; height: 15px; flex-shrink: 0; }
 
     /* ── Summary Cards ── */
     .summary-grid {
@@ -73,7 +156,6 @@
     .balance .card-icon  { background: linear-gradient(135deg, #003366, #00e6c3); }
     .income  .card-icon  { background: #e6f7ec; }
     .expense .card-icon  { background: #ffe6e9; }
-
     .card-icon svg { width: 18px; height: 18px; }
 
     .card-label {
@@ -89,9 +171,7 @@
     .income  .card-value { color: var(--green); }
     .expense .card-value { color: var(--red); }
 
-    .card-sub {
-      font-size: 12px; color: var(--muted);
-    }
+    .card-sub { font-size: 12px; color: var(--muted); }
 
     /* ── Charts row ── */
     .charts-row {
@@ -108,19 +188,13 @@
       border: 1px solid var(--border);
       box-shadow: 0 4px 16px rgba(0,51,102,0.07);
     }
-
     .chart-card h3 {
       margin: 0 0 16px;
-      font-size: 15px;
-      font-weight: 700;
+      font-size: 15px; font-weight: 700;
       color: var(--text);
       font-family: system-ui, -apple-system, sans-serif;
     }
-
-    .chart-wrap {
-      position: relative;
-      height: 220px;
-    }
+    .chart-wrap { position: relative; height: 220px; }
 
     /* ── Recent Transactions ── */
     .recent-card {
@@ -130,77 +204,47 @@
       border: 1px solid var(--border);
       box-shadow: 0 4px 16px rgba(0,51,102,0.07);
     }
-
     .recent-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
       margin-bottom: 16px;
     }
-
     .recent-header h3 {
       margin: 0;
-      font-size: 15px;
-      font-weight: 700;
+      font-size: 15px; font-weight: 700;
       color: var(--text);
       font-family: system-ui, -apple-system, sans-serif;
     }
-
     .see-all {
-      font-size: 13px;
-      color: var(--teal2);
-      text-decoration: none;
-      font-weight: 600;
+      font-size: 13px; color: var(--teal2);
+      text-decoration: none; font-weight: 600;
     }
     .see-all:hover { color: var(--navy); }
 
     .txn-list { display: flex; flex-direction: column; gap: 10px; }
-
     .txn-item {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      padding: 10px 14px;
-      border-radius: 10px;
-      background: #f9fafb;
-      border: 1px solid #f1f5f9;
+      display: flex; align-items: center; gap: 14px;
+      padding: 10px 14px; border-radius: 10px;
+      background: #f9fafb; border: 1px solid #f1f5f9;
     }
-
     .txn-dot {
-      width: 36px; height: 36px;
-      border-radius: 10px;
+      width: 36px; height: 36px; border-radius: 10px;
       display: flex; align-items: center; justify-content: center;
-      flex-shrink: 0;
-      font-size: 14px;
+      flex-shrink: 0; font-size: 14px;
     }
     .txn-dot.income  { background: #e6f7ec; }
     .txn-dot.expense { background: #ffe6e9; }
-
     .txn-info { flex: 1; min-width: 0; }
-    .txn-info .txn-cat {
-      font-size: 14px; font-weight: 600; color: var(--text);
-      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-    }
-    .txn-info .txn-date {
-      font-size: 12px; color: var(--muted);
-    }
-
-    .txn-amount {
-      font-size: 14px; font-weight: 700;
-      white-space: nowrap;
-    }
+    .txn-info .txn-cat  { font-size: 14px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .txn-info .txn-date { font-size: 12px; color: var(--muted); }
+    .txn-amount { font-size: 14px; font-weight: 700; white-space: nowrap; }
     .txn-amount.income  { color: var(--green); }
     .txn-amount.expense { color: var(--red); }
 
-    .empty-state {
-      text-align: center;
-      padding: 40px 20px;
-      color: var(--muted);
-      font-size: 14px;
-    }
+    .empty-state { text-align: center; padding: 40px 20px; color: var(--muted); font-size: 14px; }
     .empty-state .empty-icon { font-size: 40px; margin-bottom: 8px; }
 
-    /* Skeleton loader */
     .skeleton {
       background: linear-gradient(90deg, #f0f0f0 25%, #e0e8f0 50%, #f0f0f0 75%);
       background-size: 200% 100%;
@@ -211,7 +255,6 @@
       0%   { background-position: 200% 0; }
       100% { background-position: -200% 0; }
     }
-
     .skeleton-val { height: 32px; width: 100px; margin: 4px 0; }
     .skeleton-sub { height: 14px; width: 70px; }
 
@@ -235,14 +278,48 @@
         <a href="{% url 'accounts' %}"    class="button-link">Accounts</a>
         <a href="{% url 'transaction' %}" class="button-link">Transactions</a>
       </div>
+      <!-- Profile Avatar -->
+      <div class="profile-wrapper" id="profileWrapper">
+        <div class="profile-avatar" id="profileAvatar" title="Account">
+          {{ request.user.username|slice:":1"|upper }}
+        </div>
+        <div class="profile-dropdown" id="profileDropdown">
+          <div class="profile-dropdown-header">
+            <div class="pd-name">{{ request.user.username|capfirst }}</div>
+            <div class="pd-role">Personal Finance</div>
+          </div>
+          <a href="{% url 'home' %}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
+            </svg>
+            Overview
+          </a>
+          <a href="{% url 'accounts' %}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="3"/>
+            </svg>
+            Accounts
+          </a>
+          <a href="{% url 'logout' %}" class="logout" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
+            </svg>
+            Log out
+          </a>
+        </div>
+      </div>
     </div>
   </header>
+
+  <!-- Hidden logout form for CSRF-safe POST -->
+  <form id="logout-form" method="post" action="{% url 'logout' %}" style="display:none;">
+    {% csrf_token %}
+  </form>
 
   <main>
 
     <!-- ── Summary Cards ── -->
     <div class="summary-grid">
-
       <div class="summary-card balance">
         <div class="card-icon">
           <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2">
@@ -277,7 +354,6 @@
         <div class="card-value" id="val-expense"><span class="skeleton skeleton-val"></span></div>
         <div class="card-sub" id="sub-expense"><span class="skeleton skeleton-sub"></span></div>
       </div>
-
     </div>
 
     <!-- ── Charts ── -->
@@ -303,7 +379,6 @@
         <a href="{% url 'transaction' %}" class="see-all">See all →</a>
       </div>
       <div class="txn-list" id="recent-list">
-        <!-- populated by JS -->
         <div class="txn-item" style="opacity:.4">
           <div class="txn-dot"><span class="skeleton" style="width:36px;height:36px;border-radius:10px;"></span></div>
           <div class="txn-info">
@@ -319,23 +394,35 @@
 
   <script>
   (function () {
+    // ── Profile dropdown toggle ──
+    const wrapper  = document.getElementById('profileWrapper');
+    const avatar   = document.getElementById('profileAvatar');
+    const dropdown = document.getElementById('profileDropdown');
+
+    avatar.addEventListener('click', e => {
+      e.stopPropagation();
+      dropdown.classList.toggle('open');
+    });
+    document.addEventListener('click', e => {
+      if (!wrapper.contains(e.target)) dropdown.classList.remove('open');
+    });
+
+    // ── Chart helpers ──
     const INR = n => '₹' + Number(n).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-    // ── Palette ──
     const PALETTE = [
       '#003366','#00b89c','#e74c3c','#f39c12',
       '#8e44ad','#2980b9','#16a085','#c0392b',
     ];
 
-    // ── Merge two month series into a shared label set ──
     function mergeMonths(incArr, expArr) {
       const months = new Set([...incArr.map(d => d.month), ...expArr.map(d => d.month)]);
       const sorted = Array.from(months).sort();
-      const incMap  = Object.fromEntries(incArr.map(d => [d.month, d.total]));
-      const expMap  = Object.fromEntries(expArr.map(d => [d.month, d.total]));
+      const incMap = Object.fromEntries(incArr.map(d => [d.month, d.total]));
+      const expMap = Object.fromEntries(expArr.map(d => [d.month, d.total]));
       return {
         labels:   sorted.map(m => { const [y,mo]=m.split('-'); return new Date(y,mo-1).toLocaleString('default',{month:'short',year:'2-digit'}); }),
-        incomes:  sorted.map(m => incMap[m]  || 0),
+        incomes:  sorted.map(m => incMap[m] || 0),
         expenses: sorted.map(m => expMap[m] || 0),
       };
     }
@@ -356,38 +443,46 @@
       }
 
       lineChart = new Chart(ctx, {
-        type: 'bar',
+        type: 'line',
         data: {
           labels,
           datasets: [
             {
               label: 'Income',
               data: incomes,
-              backgroundColor: 'rgba(10,125,53,0.15)',
               borderColor: '#0a7d35',
-              borderWidth: 2,
-              borderRadius: 6,
-              type: 'bar',
+              backgroundColor: 'rgba(10,125,53,0.10)',
+              borderWidth: 2.5,
+              pointRadius: 4,
+              pointBackgroundColor: '#0a7d35',
+              pointHoverRadius: 6,
+              tension: 0.4,
+              fill: true,
             },
             {
               label: 'Expenses',
               data: expenses,
-              backgroundColor: 'rgba(176,0,32,0.12)',
               borderColor: '#b00020',
-              borderWidth: 2,
-              borderRadius: 6,
-              type: 'bar',
+              backgroundColor: 'rgba(176,0,32,0.08)',
+              borderWidth: 2.5,
+              pointRadius: 4,
+              pointBackgroundColor: '#b00020',
+              pointHoverRadius: 6,
+              tension: 0.4,
+              fill: true,
             },
             {
               label: 'Net',
               data: incomes.map((inc, i) => inc - expenses[i]),
               borderColor: '#003366',
               backgroundColor: 'transparent',
-              borderWidth: 2.5,
-              pointRadius: 4,
+              borderWidth: 2,
+              borderDash: [5, 4],
+              pointRadius: 3,
               pointBackgroundColor: '#003366',
+              pointHoverRadius: 5,
               tension: 0.4,
-              type: 'line',
+              fill: false,
             },
           ],
         },
@@ -398,9 +493,7 @@
           plugins: {
             legend: { position: 'bottom', labels: { boxWidth: 12, padding: 16, font: { size: 12 } } },
             tooltip: {
-              callbacks: {
-                label: ctx => ` ${ctx.dataset.label}: ${INR(ctx.parsed.y)}`,
-              },
+              callbacks: { label: ctx => ` ${ctx.dataset.label}: ${INR(ctx.parsed.y)}` },
             },
           },
           scales: {
@@ -442,11 +535,7 @@
           cutout: '58%',
           plugins: {
             legend: { position: 'bottom', labels: { boxWidth: 12, padding: 12, font: { size: 11 } } },
-            tooltip: {
-              callbacks: {
-                label: ctx => ` ${ctx.label}: ${INR(ctx.parsed)}`,
-              },
-            },
+            tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ${INR(ctx.parsed)}` } },
           },
         },
       });
@@ -483,7 +572,6 @@
         if (!res.ok) throw new Error();
         const d = await res.json();
 
-        // Cards
         document.getElementById('val-balance').textContent = INR(d.balance);
         document.getElementById('val-income').textContent  = INR(d.total_income);
         document.getElementById('val-expense').textContent = INR(d.total_expense);
@@ -492,9 +580,9 @@
           ? ((d.total_income - d.total_expense) / d.total_income * 100).toFixed(1)
           : 0;
 
-        document.getElementById('sub-balance').textContent  = `Savings rate: ${savingsRate}%`;
-        document.getElementById('sub-income').textContent   = 'All time';
-        document.getElementById('sub-expense').textContent  = 'All time';
+        document.getElementById('sub-balance').textContent = `Savings rate: ${savingsRate}%`;
+        document.getElementById('sub-income').textContent  = 'All time';
+        document.getElementById('sub-expense').textContent = 'All time';
 
         buildLineChart(d.monthly_income, d.monthly_expense);
         buildPieChart(d.category_expenses);
