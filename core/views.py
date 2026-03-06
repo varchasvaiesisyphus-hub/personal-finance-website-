@@ -12,10 +12,6 @@ from django.views.decorators.http import require_http_methods
 from .models import Category, Transaction
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Helpers
-# ─────────────────────────────────────────────────────────────────────────────
-
 def _account_balance(user, account):
     income  = Transaction.objects.filter(user=user, account=account, type='income')\
                                   .aggregate(t=Sum('amount'))['t'] or 0
@@ -41,10 +37,6 @@ def _fmt_monthly(qs):
     return [{'month': str(r['month'])[:7], 'total': float(r['total'])} for r in qs]
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Pages
-# ─────────────────────────────────────────────────────────────────────────────
-
 @login_required
 def home(request):
     transactions = Transaction.objects.filter(user=request.user).order_by('-date', '-created_at')
@@ -53,7 +45,7 @@ def home(request):
 
 @login_required
 def accounts(request):
-    return render(request, 'accounts.html')
+    return render(request, 'Accounts.html')   # ← capital A, matches the actual file
 
 
 @login_required
@@ -63,10 +55,6 @@ def transaction(request):
     ).order_by('-date', '-created_at')
     return render(request, 'transaction.html', {'transactions': transactions})
 
-
-# ─────────────────────────────────────────────────────────────────────────────
-# API — categories
-# ─────────────────────────────────────────────────────────────────────────────
 
 @login_required
 def api_categories(request):
@@ -96,10 +84,6 @@ def category_delete(request, pk):
     except Category.DoesNotExist:
         return JsonResponse({'message': 'Category not found'}, status=404)
 
-
-# ─────────────────────────────────────────────────────────────────────────────
-# API — transactions
-# ─────────────────────────────────────────────────────────────────────────────
 
 @require_http_methods(['POST'])
 @login_required
@@ -165,23 +149,16 @@ def api_delete_transactions(request):
         return JsonResponse({'message': str(e)}, status=400)
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# API — balances
-# ─────────────────────────────────────────────────────────────────────────────
-
 @login_required
 def api_balances(request):
     user = request.user
     return JsonResponse({
         'cash':    _account_balance(user, 'cash'),
         'bank':    _account_balance(user, 'bank'),
+        'savings': _account_balance(user, 'savings'),
         'overall': _overall_balance(user),
     })
 
-
-# ─────────────────────────────────────────────────────────────────────────────
-# API — transfer
-# ─────────────────────────────────────────────────────────────────────────────
 
 @require_http_methods(['POST'])
 @login_required
@@ -240,13 +217,8 @@ def api_transfer(request):
         return JsonResponse({'message': str(e)}, status=400)
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# API — summary (overview page)
-# ─────────────────────────────────────────────────────────────────────────────
-
 @login_required
 def api_summary(request):
-    """Overall summary: totals, monthly breakdown, category breakdown."""
     user = request.user
     cutoff = _six_months_ago()
 
@@ -303,14 +275,9 @@ def api_summary(request):
     })
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# API — account summary (accounts page)
-# ─────────────────────────────────────────────────────────────────────────────
-
 @login_required
 def api_account_summary(request, account):
-    """Per-account breakdown: inflow, outflow, balance, monthly trend."""
-    if account not in ('cash', 'bank'):
+    if account not in ('cash', 'bank', 'savings'):
         return JsonResponse({'message': 'Unknown account'}, status=400)
 
     user   = request.user

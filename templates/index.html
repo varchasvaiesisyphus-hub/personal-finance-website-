@@ -73,14 +73,12 @@
     .balance .card-icon  { background: linear-gradient(135deg, #003366, #00e6c3); }
     .income  .card-icon  { background: #e6f7ec; }
     .expense .card-icon  { background: #ffe6e9; }
-
     .card-icon svg { width: 18px; height: 18px; }
 
     .card-label {
       font-size: 12px; font-weight: 600; color: var(--muted);
       text-transform: uppercase; letter-spacing: 0.05em;
     }
-
     .card-value {
       font-size: 26px; font-weight: 800; color: var(--text);
       font-family: system-ui, -apple-system, sans-serif;
@@ -88,10 +86,7 @@
     .balance .card-value { color: var(--navy); }
     .income  .card-value { color: var(--green); }
     .expense .card-value { color: var(--red); }
-
-    .card-sub {
-      font-size: 12px; color: var(--muted);
-    }
+    .card-sub { font-size: 12px; color: var(--muted); }
 
     /* ── Charts row ── */
     .charts-row {
@@ -100,7 +95,6 @@
       gap: 18px;
       margin-bottom: 24px;
     }
-
     .chart-card {
       background: var(--card);
       border-radius: 16px;
@@ -108,19 +102,12 @@
       border: 1px solid var(--border);
       box-shadow: 0 4px 16px rgba(0,51,102,0.07);
     }
-
     .chart-card h3 {
       margin: 0 0 16px;
-      font-size: 15px;
-      font-weight: 700;
-      color: var(--text);
+      font-size: 15px; font-weight: 700; color: var(--text);
       font-family: system-ui, -apple-system, sans-serif;
     }
-
-    .chart-wrap {
-      position: relative;
-      height: 220px;
-    }
+    .chart-wrap { position: relative; height: 220px; }
 
     /* ── Recent Transactions ── */
     .recent-card {
@@ -130,77 +117,44 @@
       border: 1px solid var(--border);
       box-shadow: 0 4px 16px rgba(0,51,102,0.07);
     }
-
     .recent-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
+      display: flex; justify-content: space-between; align-items: center;
       margin-bottom: 16px;
     }
-
     .recent-header h3 {
-      margin: 0;
-      font-size: 15px;
-      font-weight: 700;
-      color: var(--text);
+      margin: 0; font-size: 15px; font-weight: 700; color: var(--text);
       font-family: system-ui, -apple-system, sans-serif;
     }
-
-    .see-all {
-      font-size: 13px;
-      color: var(--teal2);
-      text-decoration: none;
-      font-weight: 600;
-    }
+    .see-all { font-size: 13px; color: var(--teal2); text-decoration: none; font-weight: 600; }
     .see-all:hover { color: var(--navy); }
 
     .txn-list { display: flex; flex-direction: column; gap: 10px; }
-
     .txn-item {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      padding: 10px 14px;
-      border-radius: 10px;
-      background: #f9fafb;
-      border: 1px solid #f1f5f9;
+      display: flex; align-items: center; gap: 14px;
+      padding: 10px 14px; border-radius: 10px;
+      background: #f9fafb; border: 1px solid #f1f5f9;
     }
-
     .txn-dot {
-      width: 36px; height: 36px;
-      border-radius: 10px;
+      width: 36px; height: 36px; border-radius: 10px;
       display: flex; align-items: center; justify-content: center;
-      flex-shrink: 0;
-      font-size: 14px;
+      flex-shrink: 0; font-size: 14px;
     }
     .txn-dot.income  { background: #e6f7ec; }
     .txn-dot.expense { background: #ffe6e9; }
-
     .txn-info { flex: 1; min-width: 0; }
     .txn-info .txn-cat {
       font-size: 14px; font-weight: 600; color: var(--text);
       white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
-    .txn-info .txn-date {
-      font-size: 12px; color: var(--muted);
-    }
-
-    .txn-amount {
-      font-size: 14px; font-weight: 700;
-      white-space: nowrap;
-    }
+    .txn-info .txn-date { font-size: 12px; color: var(--muted); }
+    .txn-amount { font-size: 14px; font-weight: 700; white-space: nowrap; }
     .txn-amount.income  { color: var(--green); }
     .txn-amount.expense { color: var(--red); }
 
-    .empty-state {
-      text-align: center;
-      padding: 40px 20px;
-      color: var(--muted);
-      font-size: 14px;
-    }
+    .empty-state { text-align: center; padding: 40px 20px; color: var(--muted); font-size: 14px; }
     .empty-state .empty-icon { font-size: 40px; margin-bottom: 8px; }
 
-    /* Skeleton loader */
+    /* Skeleton */
     .skeleton {
       background: linear-gradient(90deg, #f0f0f0 25%, #e0e8f0 50%, #f0f0f0 75%);
       background-size: 200% 100%;
@@ -211,13 +165,118 @@
       0%   { background-position: 200% 0; }
       100% { background-position: -200% 0; }
     }
-
     .skeleton-val { height: 32px; width: 100px; margin: 4px 0; }
     .skeleton-sub { height: 14px; width: 70px; }
+
+    /* ── Garvis section (inline — also in style.css) ── */
+    .garvis-section {
+      margin-bottom: 28px;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    }
+    .garvis-section-header {
+      display: flex; align-items: center; gap: 10px; margin-bottom: 14px;
+    }
+    .garvis-section-badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 4px 10px; border-radius: 20px;
+      background: linear-gradient(135deg, #003366, #00b89c);
+      color: #fff; font-size: 11px; font-weight: 700;
+      letter-spacing: 0.06em; text-transform: uppercase;
+    }
+    .garvis-section-title { font-size: 17px; font-weight: 700; color: #111827; margin: 0; }
+    .garvis-section-sub   { font-size: 13px; color: #6b7280; margin: 0 0 0 auto; }
+
+    #garvis-insights-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 16px;
+    }
+
+    .garvis-card {
+      background: #fff; border-radius: 16px; border: 1px solid #e5e7eb;
+      padding: 20px 22px; box-shadow: 0 4px 16px rgba(0,51,102,0.07);
+      display: flex; flex-direction: column; gap: 10px;
+      transition: transform 0.18s, box-shadow 0.18s;
+      position: relative; overflow: hidden;
+    }
+    .garvis-card::before {
+      content:''; position:absolute; left:0; top:0; bottom:0; width:4px;
+      background: linear-gradient(180deg,#003366,#00e6c3);
+      border-radius: 16px 0 0 16px;
+    }
+    .garvis-card:hover { transform: translateY(-3px); box-shadow: 0 10px 30px rgba(0,51,102,0.12); }
+    .garvis-card--accepted { border-color:#a7f3d0; background:#f0fdf9; }
+    .garvis-card--accepted::before { background:#0a7d35; }
+    .garvis-card--rejected { border-color:#fecaca; background:#fff5f5; opacity:0.7; }
+    .garvis-card--rejected::before { background:#b00020; }
+
+    .garvis-card-header { display:flex; align-items:flex-start; gap:10px; }
+    .garvis-card-icon {
+      width:32px; height:32px; border-radius:8px;
+      background: linear-gradient(135deg,#003366,#00b89c);
+      color:#fff; font-size:14px; display:flex; align-items:center; justify-content:center; flex-shrink:0;
+    }
+    .garvis-card-title { font-size:14px; font-weight:700; color:#111827; line-height:1.4; flex:1; }
+    .garvis-card-body  { font-size:13px; color:#374151; line-height:1.6; margin:0; }
+
+    .garvis-saving {
+      display:inline-flex; align-items:center; gap:5px;
+      font-size:12px; font-weight:600; color:#0a7d35;
+      background:#e6f7ec; padding:4px 10px; border-radius:20px; width:fit-content;
+    }
+    .garvis-next-step {
+      font-size:12px; color:#6b7280; background:#f9fafb;
+      border-radius:8px; padding:8px 10px; border:1px solid #f1f5f9;
+    }
+    .garvis-next-label { font-weight:700; color:#374151; }
+
+    .garvis-tags { display:flex; flex-wrap:wrap; gap:5px; }
+    .garvis-tag {
+      font-size:11px; padding:3px 8px; border-radius:12px;
+      background:#eef2ff; color:#3730a3; font-weight:500;
+    }
+
+    .garvis-confidence {
+      font-size:10px; font-weight:700; padding:3px 8px; border-radius:10px;
+      text-transform:uppercase; letter-spacing:0.05em; white-space:nowrap; flex-shrink:0;
+    }
+    .garvis-conf-high   { background:#dcfce7; color:#166534; }
+    .garvis-conf-medium { background:#fef9c3; color:#854d0e; }
+    .garvis-conf-low    { background:#fee2e2; color:#991b1b; }
+
+    .garvis-actions { display:flex; gap:8px; align-items:center; margin-top:4px; flex-wrap:wrap; }
+    .garvis-btn {
+      display:inline-flex; align-items:center; gap:5px;
+      padding:7px 14px; border-radius:8px; border:none;
+      font-size:12px; font-weight:600; cursor:pointer; font-family:inherit;
+      transition:opacity 0.15s, transform 0.12s;
+    }
+    .garvis-btn:hover:not([disabled]) { opacity:0.85; transform:translateY(-1px); }
+    .garvis-btn[disabled] { opacity:0.45; cursor:not-allowed; }
+    .garvis-btn-accept {
+      background: linear-gradient(135deg,#0a7d35,#00b89c); color:#fff;
+      box-shadow: 0 2px 8px rgba(10,125,53,0.25);
+    }
+    .garvis-btn-dismiss { background:#f3f4f6; color:#374151; border:1px solid #e5e7eb; }
+    .garvis-btn-dismiss:hover:not([disabled]) { background:#fee2e2; color:#b91c1c; border-color:#fecaca; }
+    .garvis-feedback-msg { font-size:12px; color:#6b7280; margin-left:auto; }
+
+    .garvis-state-loading,.garvis-state-empty,.garvis-state-error {
+      grid-column:1/-1; text-align:center; padding:32px 20px; font-size:13px; color:#6b7280;
+    }
+    .garvis-empty-icon { font-size:36px; margin-bottom:8px; }
+    .garvis-empty-sub  { font-size:12px; color:#9ca3af; margin:4px 0 0; }
+    .garvis-state-error { color:#b91c1c; }
+    .garvis-spinner {
+      width:22px; height:22px; border:2px solid #e5e7eb; border-top-color:#00b89c;
+      border-radius:50%; animation:garvis-spin 0.7s linear infinite; margin:0 auto 8px;
+    }
+    @keyframes garvis-spin { to { transform:rotate(360deg); } }
 
     @media (max-width: 720px) {
       .summary-grid { grid-template-columns: 1fr; }
       .charts-row   { grid-template-columns: 1fr; }
+      #garvis-insights-container { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -242,7 +301,6 @@
 
     <!-- ── Summary Cards ── -->
     <div class="summary-grid">
-
       <div class="summary-card balance">
         <div class="card-icon">
           <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2">
@@ -251,48 +309,58 @@
         </div>
         <div class="card-label">Net Balance</div>
         <div class="card-value" id="val-balance"><span class="skeleton skeleton-val"></span></div>
-        <div class="card-sub" id="sub-balance"><span class="skeleton skeleton-sub"></span></div>
+        <div class="card-sub"   id="sub-balance"><span class="skeleton skeleton-sub"></span></div>
       </div>
 
       <div class="summary-card income">
         <div class="card-icon">
           <svg viewBox="0 0 24 24" fill="none" stroke="#0a7d35" stroke-width="2">
-            <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/>
-            <polyline points="17 6 23 6 23 12"/>
+            <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/>
           </svg>
         </div>
         <div class="card-label">Total Income</div>
         <div class="card-value" id="val-income"><span class="skeleton skeleton-val"></span></div>
-        <div class="card-sub" id="sub-income"><span class="skeleton skeleton-sub"></span></div>
+        <div class="card-sub"   id="sub-income"><span class="skeleton skeleton-sub"></span></div>
       </div>
 
       <div class="summary-card expense">
         <div class="card-icon">
           <svg viewBox="0 0 24 24" fill="none" stroke="#b00020" stroke-width="2">
-            <polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/>
-            <polyline points="17 18 23 18 23 12"/>
+            <polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/><polyline points="17 18 23 18 23 12"/>
           </svg>
         </div>
         <div class="card-label">Total Expenses</div>
         <div class="card-value" id="val-expense"><span class="skeleton skeleton-val"></span></div>
-        <div class="card-sub" id="sub-expense"><span class="skeleton skeleton-sub"></span></div>
+        <div class="card-sub"   id="sub-expense"><span class="skeleton skeleton-sub"></span></div>
       </div>
-
     </div>
+
+    <!-- ══════════════════════════════════════════════
+         GARVIS AI INSIGHTS
+    ══════════════════════════════════════════════ -->
+    <section class="garvis-section" aria-label="AI Insights">
+      <div class="garvis-section-header">
+        <span class="garvis-section-badge">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/>
+          </svg>
+          Garvis AI
+        </span>
+        <h2 class="garvis-section-title">Your Personalised Insights</h2>
+        <span class="garvis-section-sub">Powered by AI · Based on your last 90 days</span>
+      </div>
+      <div id="garvis-insights-container" aria-live="polite"></div>
+    </section>
 
     <!-- ── Charts ── -->
     <div class="charts-row">
       <div class="chart-card">
         <h3>Income vs Expenses — Last 6 Months</h3>
-        <div class="chart-wrap">
-          <canvas id="lineChart"></canvas>
-        </div>
+        <div class="chart-wrap"><canvas id="lineChart"></canvas></div>
       </div>
       <div class="chart-card">
         <h3>Expense Breakdown</h3>
-        <div class="chart-wrap">
-          <canvas id="pieChart"></canvas>
-        </div>
+        <div class="chart-wrap"><canvas id="pieChart"></canvas></div>
       </div>
     </div>
 
@@ -303,7 +371,6 @@
         <a href="{% url 'transaction' %}" class="see-all">See all →</a>
       </div>
       <div class="txn-list" id="recent-list">
-        <!-- populated by JS -->
         <div class="txn-item" style="opacity:.4">
           <div class="txn-dot"><span class="skeleton" style="width:36px;height:36px;border-radius:10px;"></span></div>
           <div class="txn-info">
@@ -317,22 +384,19 @@
 
   </main>
 
+  <!-- Garvis insights JS -->
+  <script src="{% static 'js/garvis_insights.js' %}" defer></script>
+
   <script>
   (function () {
     const INR = n => '₹' + Number(n).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const PALETTE = ['#003366','#00b89c','#e74c3c','#f39c12','#8e44ad','#2980b9','#16a085','#c0392b'];
 
-    // ── Palette ──
-    const PALETTE = [
-      '#003366','#00b89c','#e74c3c','#f39c12',
-      '#8e44ad','#2980b9','#16a085','#c0392b',
-    ];
-
-    // ── Merge two month series into a shared label set ──
     function mergeMonths(incArr, expArr) {
       const months = new Set([...incArr.map(d => d.month), ...expArr.map(d => d.month)]);
       const sorted = Array.from(months).sort();
-      const incMap  = Object.fromEntries(incArr.map(d => [d.month, d.total]));
-      const expMap  = Object.fromEntries(expArr.map(d => [d.month, d.total]));
+      const incMap = Object.fromEntries(incArr.map(d => [d.month, d.total]));
+      const expMap = Object.fromEntries(expArr.map(d => [d.month, d.total]));
       return {
         labels:   sorted.map(m => { const [y,mo]=m.split('-'); return new Date(y,mo-1).toLocaleString('default',{month:'short',year:'2-digit'}); }),
         incomes:  sorted.map(m => incMap[m]  || 0),
@@ -340,76 +404,29 @@
       };
     }
 
-    let lineChart = null;
-    let pieChart  = null;
+    let lineChart = null, pieChart = null;
 
     function buildLineChart(monthly_income, monthly_expense) {
       const ctx = document.getElementById('lineChart');
       if (!ctx) return;
       if (lineChart) lineChart.destroy();
-
       const { labels, incomes, expenses } = mergeMonths(monthly_income, monthly_expense);
-
       if (!labels.length) {
         ctx.parentElement.innerHTML = '<div class="empty-state"><div class="empty-icon">📈</div>No data yet</div>';
         return;
       }
-
       lineChart = new Chart(ctx, {
         type: 'bar',
-        data: {
-          labels,
-          datasets: [
-            {
-              label: 'Income',
-              data: incomes,
-              backgroundColor: 'rgba(10,125,53,0.15)',
-              borderColor: '#0a7d35',
-              borderWidth: 2,
-              borderRadius: 6,
-              type: 'bar',
-            },
-            {
-              label: 'Expenses',
-              data: expenses,
-              backgroundColor: 'rgba(176,0,32,0.12)',
-              borderColor: '#b00020',
-              borderWidth: 2,
-              borderRadius: 6,
-              type: 'bar',
-            },
-            {
-              label: 'Net',
-              data: incomes.map((inc, i) => inc - expenses[i]),
-              borderColor: '#003366',
-              backgroundColor: 'transparent',
-              borderWidth: 2.5,
-              pointRadius: 4,
-              pointBackgroundColor: '#003366',
-              tension: 0.4,
-              type: 'line',
-            },
-          ],
-        },
+        data: { labels, datasets: [
+          { label:'Income',   data:incomes,  backgroundColor:'rgba(10,125,53,0.15)',  borderColor:'#0a7d35', borderWidth:2, borderRadius:6, type:'bar' },
+          { label:'Expenses', data:expenses, backgroundColor:'rgba(176,0,32,0.12)',   borderColor:'#b00020', borderWidth:2, borderRadius:6, type:'bar' },
+          { label:'Net', data:incomes.map((inc,i)=>inc-expenses[i]), borderColor:'#003366', backgroundColor:'transparent', borderWidth:2.5, pointRadius:4, pointBackgroundColor:'#003366', tension:0.4, type:'line' },
+        ]},
         options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          interaction: { mode: 'index', intersect: false },
-          plugins: {
-            legend: { position: 'bottom', labels: { boxWidth: 12, padding: 16, font: { size: 12 } } },
-            tooltip: {
-              callbacks: {
-                label: ctx => ` ${ctx.dataset.label}: ${INR(ctx.parsed.y)}`,
-              },
-            },
-          },
-          scales: {
-            x: { grid: { display: false }, ticks: { font: { size: 11 } } },
-            y: {
-              grid: { color: 'rgba(0,0,0,0.05)' },
-              ticks: { font: { size: 11 }, callback: v => '₹' + v.toLocaleString('en-IN') },
-            },
-          },
+          responsive:true, maintainAspectRatio:false,
+          interaction:{ mode:'index', intersect:false },
+          plugins:{ legend:{ position:'bottom', labels:{ boxWidth:12, padding:16, font:{ size:12 } } }, tooltip:{ callbacks:{ label: ctx => ` ${ctx.dataset.label}: ${INR(ctx.parsed.y)}` } } },
+          scales:{ x:{ grid:{ display:false }, ticks:{ font:{ size:11 } } }, y:{ grid:{ color:'rgba(0,0,0,0.05)' }, ticks:{ font:{ size:11 }, callback: v => '₹'+v.toLocaleString('en-IN') } } },
         },
       });
     }
@@ -418,37 +435,14 @@
       const ctx = document.getElementById('pieChart');
       if (!ctx) return;
       if (pieChart) pieChart.destroy();
-
       if (!cat_expenses.length) {
         ctx.parentElement.innerHTML = '<div class="empty-state"><div class="empty-icon">🍰</div>No expenses yet</div>';
         return;
       }
-
       pieChart = new Chart(ctx, {
-        type: 'doughnut',
-        data: {
-          labels: cat_expenses.map(c => c.name),
-          datasets: [{
-            data: cat_expenses.map(c => c.total),
-            backgroundColor: PALETTE.slice(0, cat_expenses.length),
-            borderWidth: 2,
-            borderColor: '#fff',
-            hoverOffset: 6,
-          }],
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          cutout: '58%',
-          plugins: {
-            legend: { position: 'bottom', labels: { boxWidth: 12, padding: 12, font: { size: 11 } } },
-            tooltip: {
-              callbacks: {
-                label: ctx => ` ${ctx.label}: ${INR(ctx.parsed)}`,
-              },
-            },
-          },
-        },
+        type:'doughnut',
+        data:{ labels:cat_expenses.map(c=>c.name), datasets:[{ data:cat_expenses.map(c=>c.total), backgroundColor:PALETTE.slice(0,cat_expenses.length), borderWidth:2, borderColor:'#fff', hoverOffset:6 }] },
+        options:{ responsive:true, maintainAspectRatio:false, cutout:'58%', plugins:{ legend:{ position:'bottom', labels:{ boxWidth:12, padding:12, font:{ size:11 } } }, tooltip:{ callbacks:{ label: ctx => ` ${ctx.label}: ${INR(ctx.parsed)}` } } } },
       });
     }
 
@@ -462,7 +456,7 @@
       list.innerHTML = txns.map(t => {
         const sign  = t.type === 'income' ? '+' : '−';
         const emoji = t.type === 'income' ? '💰' : '💸';
-        const d     = new Date(t.date);
+        const d = new Date(t.date);
         const dateStr = d.toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' });
         return `
           <div class="txn-item">
@@ -472,8 +466,7 @@
               <div class="txn-date">${dateStr} · ${t.account.charAt(0).toUpperCase()+t.account.slice(1)}</div>
             </div>
             <div class="txn-amount ${t.type}">${sign}${INR(t.amount)}</div>
-          </div>
-        `;
+          </div>`;
       }).join('');
     }
 
@@ -482,24 +475,16 @@
         const res = await fetch('/api/summary/');
         if (!res.ok) throw new Error();
         const d = await res.json();
-
-        // Cards
         document.getElementById('val-balance').textContent = INR(d.balance);
         document.getElementById('val-income').textContent  = INR(d.total_income);
         document.getElementById('val-expense').textContent = INR(d.total_expense);
-
-        const savingsRate = d.total_income > 0
-          ? ((d.total_income - d.total_expense) / d.total_income * 100).toFixed(1)
-          : 0;
-
-        document.getElementById('sub-balance').textContent  = `Savings rate: ${savingsRate}%`;
-        document.getElementById('sub-income').textContent   = 'All time';
-        document.getElementById('sub-expense').textContent  = 'All time';
-
+        const savingsRate = d.total_income > 0 ? ((d.total_income - d.total_expense) / d.total_income * 100).toFixed(1) : 0;
+        document.getElementById('sub-balance').textContent = `Savings rate: ${savingsRate}%`;
+        document.getElementById('sub-income').textContent  = 'All time';
+        document.getElementById('sub-expense').textContent = 'All time';
         buildLineChart(d.monthly_income, d.monthly_expense);
         buildPieChart(d.category_expenses);
         buildRecent(d.recent_transactions);
-
       } catch {
         ['val-balance','val-income','val-expense'].forEach(id => {
           document.getElementById(id).textContent = 'Error';

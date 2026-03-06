@@ -25,4 +25,5 @@ urlpatterns = [
     path('accounts/logout/', auth_views.LogoutView.as_view(), name='logout'),
     # This must be LAST so it doesn't "eat" other URLs
     path('', include('core.urls')), 
+    path('api/ai/', include('ai_pipeline.urls')),
 ]
