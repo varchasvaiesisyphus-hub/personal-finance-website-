@@ -1,57 +1,59 @@
 """
-Models for the AI pipeline app.
+ai_pipeline/models.py
 
-AIPreferences  – per-user opt-in/out flag.
-AIInsight      – persisted pipeline output rows (draft or final).
+Models for the AI pipeline app.
+Updated for Milestone 3: AIInsight now carries all suggestion fields.
 """
 
 from django.contrib.auth.models import User
 from django.db import models
-from django.utils import timezone
 
 
 class AIPreferences(models.Model):
-    """Stores per-user AI feature preferences."""
+    """Per-user toggle for AI insight generation."""
 
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="ai_preferences")
-    ai_enabled = models.BooleanField(default=True, help_text="Allow the AI pipeline to process this user's data.")
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        verbose_name = "AI Preference"
-        verbose_name_plural = "AI Preferences"
+    ai_enabled = models.BooleanField(default=True)
 
     def __str__(self) -> str:
-        status = "enabled" if self.ai_enabled else "disabled"
-        return f"AIPreferences({self.user.username}, {status})"
+        return f"AIPreferences(user={self.user_id}, enabled={self.ai_enabled})"
 
 
 class AIInsight(models.Model):
     """
-    Persisted row produced by the orchestrator pipeline.
-    The ``payload`` JSON field holds the full structured output
-    (or a summarised version) ready for downstream LLM consumption.
+    A single persisted LLM-generated suggestion for a user.
+
+    Milestone 2 used action/payload/days.
+    Milestone 3 adds explanation, estimated_monthly_saving, confidence,
+    next_step, tags so each row is self-contained.
     """
 
-    ACTION_DRAFT = "draft_pipeline_output"
-    ACTION_FINAL = "final_insight"
-
-    ACTION_CHOICES = [
-        (ACTION_DRAFT, "Draft Pipeline Output"),
-        (ACTION_FINAL, "Final Insight"),
+    CONFIDENCE_CHOICES = [
+        ("high", "High"),
+        ("medium", "Medium"),
+        ("low", "Low"),
     ]
 
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="ai_insights")
-    action = models.CharField(max_length=64, choices=ACTION_CHOICES, default=ACTION_DRAFT)
-    payload = models.JSONField(default=dict, help_text="Full or summarised orchestrator payload (JSON-serialisable).")
-    days = models.PositiveIntegerField(default=90, help_text="Look-back window used when generating this insight.")
-    created_at = models.DateTimeField(default=timezone.now)
+
+    # ── Core suggestion fields (Milestone 3) ──
+    action = models.CharField(max_length=255)
+    explanation = models.TextField(blank=True, default="")
+    estimated_monthly_saving = models.FloatField(null=True, blank=True)
+    confidence = models.CharField(
+        max_length=10, choices=CONFIDENCE_CHOICES, default="medium"
+    )
+    next_step = models.TextField(blank=True, default="")
+    tags = models.JSONField(default=list)
+
+    # ── Legacy Milestone 2 fields ──
+    payload = models.JSONField(default=dict, blank=True)
+    days = models.IntegerField(default=90)
+
+    created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         ordering = ["-created_at"]
-        verbose_name = "AI Insight"
-        verbose_name_plural = "AI Insights"
 
     def __str__(self) -> str:
-        return f"AIInsight({self.user.username}, {self.action}, {self.created_at:%Y-%m-%d})"
+        return f"AIInsight(user={self.user_id}, action={self.action[:40]!r})"

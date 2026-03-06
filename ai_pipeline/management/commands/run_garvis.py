@@ -1,18 +1,17 @@
 """
 ai_pipeline/management/commands/run_garvis.py
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Management command: run_garvis --user <user_id>
 
-Usage
------
+Management command for the AI pipeline.
+
+Usage:
+    # Run Milestone 2 pipeline only (draft payload):
     python manage.py run_garvis --user 1
-    python manage.py run_garvis --user 1 --days 60
 
-Behaviour
----------
-1. Calls ``prepare_user_payload`` for the given user.
-2. Pretty-prints the JSON payload to stdout.
-3. Persists a draft AIInsight row with action='draft_pipeline_output'.
+    # Run Milestone 2 + persist Milestone 3 LLM insights:
+    python manage.py run_garvis --user 1 --persist-insights
+
+    # Custom lookback window:
+    python manage.py run_garvis --user 1 --days 60 --persist-insights
 """
 
 from __future__ import annotations
@@ -23,68 +22,85 @@ import logging
 from django.contrib.auth.models import User
 from django.core.management.base import BaseCommand, CommandError
 
-from ai_pipeline.models import AIInsight
-from ai_pipeline.services.orchestrator import prepare_user_payload
-
 logger = logging.getLogger(__name__)
 
 
 class Command(BaseCommand):
-    help = "Run the Garvis AI pipeline for a single user and persist a draft AIInsight."
+    help = "Run the Garvis AI pipeline for a given user."
 
     def add_arguments(self, parser):
         parser.add_argument(
             "--user",
             type=int,
             required=True,
-            help="Primary key (id) of the User to process.",
+            help="Primary key of the User to run the pipeline for.",
         )
         parser.add_argument(
             "--days",
             type=int,
             default=90,
-            help="Look-back window in days (default: 90).",
+            help="Lookback window in days (default: 90).",
+        )
+        parser.add_argument(
+            "--persist-insights",
+            action="store_true",
+            default=False,
+            help=(
+                "After generating the pipeline payload, call the LLM and persist "
+                "AIInsight rows. Requires LLM_PROVIDER to be set (default: mock)."
+            ),
         )
 
     def handle(self, *args, **options):
         user_id: int = options["user"]
         days: int = options["days"]
+        persist: bool = options["persist_insights"]
 
-        # ── Fetch user ───────────────────────────────────────────────────────
+        # ── Load user ──
         try:
             user = User.objects.get(pk=user_id)
         except User.DoesNotExist:
-            raise CommandError(f"User with id={user_id} does not exist.")
+            raise CommandError(f"No User with pk={user_id} found.")
 
+        # ── Milestone 2: pipeline payload ──
+        from ai_pipeline.services.orchestrator import prepare_user_payload  # noqa: PLC0415
+
+        self.stdout.write(self.style.MIGRATE_HEADING(
+            f"Running Garvis pipeline for user '{user.username}' (days={days}) …"
+        ))
+
+        payload = prepare_user_payload(user, days=days)
+
+        # Persist a draft AIInsight with the raw payload (Milestone 2 behaviour)
+        from ai_pipeline.models import AIInsight  # noqa: PLC0415
+
+        draft = AIInsight.objects.create(
+            user=user,
+            action="draft_pipeline_output",
+            payload=payload,
+            days=days,
+        )
         self.stdout.write(
-            self.style.NOTICE(f"Running Garvis pipeline for user={user.username} (id={user_id}), days={days} …")
+            self.style.SUCCESS(f"Draft payload saved (AIInsight pk={draft.pk}).")
         )
 
-        # ── Run pipeline ─────────────────────────────────────────────────────
-        try:
-            payload = prepare_user_payload(user, days=days)
-        except Exception as exc:
-            logger.exception("Pipeline failed for user=%s", user_id)
-            raise CommandError(f"Pipeline failed: {exc}") from exc
-
-        # ── Print payload ────────────────────────────────────────────────────
+        # Print compact JSON to stdout
         self.stdout.write(json.dumps(payload, indent=2, default=str))
 
-        # ── Persist draft AIInsight ──────────────────────────────────────────
-        try:
-            insight = AIInsight.objects.create(
-                user=user,
-                action=AIInsight.ACTION_DRAFT,
-                payload=payload,
-                days=days,
-            )
+        # ── Milestone 3: LLM insights (optional) ──
+        if persist:
             self.stdout.write(
-                self.style.SUCCESS(
-                    f"\n✓ AIInsight saved: id={insight.pk}, action='{insight.action}'"
-                )
+                self.style.MIGRATE_HEADING("Generating LLM insights (--persist-insights) …")
             )
-        except Exception as exc:
-            logger.exception("Failed to persist AIInsight for user=%s", user_id)
-            self.stdout.write(
-                self.style.WARNING(f"Warning: could not persist AIInsight — {exc}")
-            )
+            from ai_pipeline.insights import generate_insights_for_user  # noqa: PLC0415
+
+            result = generate_insights_for_user(user_id)
+            if result.get("status") == "disabled":
+                self.stdout.write(self.style.WARNING(
+                    "AI is disabled for this user — no insights generated."
+                ))
+            else:
+                ids = result.get("saved", [])
+                self.stdout.write(self.style.SUCCESS(
+                    f"Persisted {len(ids)} insight(s): AIInsight pks = {ids}"
+                ))

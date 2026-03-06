@@ -1,4 +1,6 @@
 from pathlib import Path
+from dotenv import load_dotenv
+load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -17,7 +19,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     'core',
-    'ai_pipeline',   # ← ADD THIS
+    'ai_pipeline',  
 ]
 
 MIDDLEWARE = [
