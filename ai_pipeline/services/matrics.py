@@ -50,3 +50,9 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+get_transactions(user, days=90) -> List[TransactionDict]
+get_transactions(user, days=90) -> List[TransactionDict]
+compute_category_breakdown(transactions) -> dict
+compute_trends(transactions, months=3) -> dict
