@@ -44,7 +44,7 @@ class AIInsight(models.Model):
 
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="ai_insights")
     action = models.CharField(max_length=64, choices=ACTION_CHOICES, default=ACTION_DRAFT)
-    payload = models.JSONField(help_text="Full or summarised orchestrator payload (JSON-serialisable).")
+    payload = models.JSONField(default=dict, help_text="Full or summarised orchestrator payload (JSON-serialisable).")
     days = models.PositiveIntegerField(default=90, help_text="Look-back window used when generating this insight.")
     created_at = models.DateTimeField(default=timezone.now)
 

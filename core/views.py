@@ -2,37 +2,28 @@ import datetime
 import json
 
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User
 from django.db.models import Sum
-from django.db.models.functions import TruncDay, TruncMonth
+from django.db.models.functions import TruncMonth
 from django.http import JsonResponse
 from django.shortcuts import render
 from django.views.decorators.http import require_http_methods
 
 from .models import Category, Transaction
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Constants
-# ─────────────────────────────────────────────────────────────────────────────
-
-VALID_ACCOUNTS = ('cash', 'bank', 'savings')
-
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Helpers
-# ─────────────────────────────────────────────────────────────────────────────
 
 def _account_balance(user, account):
-    income  = Transaction.objects.filter(user=user, account=account, type='income') \
+    income  = Transaction.objects.filter(user=user, account=account, type='income')\
                                   .aggregate(t=Sum('amount'))['t'] or 0
-    expense = Transaction.objects.filter(user=user, account=account, type='expense') \
+    expense = Transaction.objects.filter(user=user, account=account, type='expense')\
                                   .aggregate(t=Sum('amount'))['t'] or 0
     return float(income - expense)
 
 
 def _overall_balance(user):
-    income  = Transaction.objects.filter(user=user, type='income') \
+    income  = Transaction.objects.filter(user=user, type='income')\
                                   .aggregate(t=Sum('amount'))['t'] or 0
-    expense = Transaction.objects.filter(user=user, type='expense') \
+    expense = Transaction.objects.filter(user=user, type='expense')\
                                   .aggregate(t=Sum('amount'))['t'] or 0
     return float(income - expense)
 
@@ -42,48 +33,19 @@ def _six_months_ago():
     return (today.replace(day=1) - datetime.timedelta(days=150)).replace(day=1)
 
 
-def _period_params(period):
-    """
-    Return (cutoff_date, trunc_function, grouping_key) for a given period string.
-    Supported: '7d', '30d', '1m', '6m' (default), '1y'
-    """
-    today = datetime.date.today()
-    if period == '7d':
-        return today - datetime.timedelta(days=6), TruncDay, 'day'
-    elif period == '30d':
-        return today - datetime.timedelta(days=29), TruncDay, 'day'
-    elif period == '1m':
-        return today.replace(day=1), TruncDay, 'day'
-    elif period == '1y':
-        one_year_ago = today.replace(year=today.year - 1)
-        return one_year_ago.replace(day=1), TruncMonth, 'month'
-    else:  # default '6m'
-        return _six_months_ago(), TruncMonth, 'month'
+def _fmt_monthly(qs):
+    return [{'month': str(r['month'])[:7], 'total': float(r['total'])} for r in qs]
 
-
-def _fmt_series(qs):
-    """Format a QuerySet annotated with period + total into a list of dicts."""
-    return [
-        {'month': str(r['period'])[:10], 'total': float(r['total'])}
-        for r in qs
-    ]
-
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Pages
-# ─────────────────────────────────────────────────────────────────────────────
 
 @login_required
 def home(request):
-    transactions = Transaction.objects.filter(
-        user=request.user
-    ).order_by('-date', '-created_at')
+    transactions = Transaction.objects.filter(user=request.user).order_by('-date', '-created_at')
     return render(request, 'index.html', {'transactions': transactions})
 
 
 @login_required
 def accounts(request):
-    return render(request, 'accounts.html')
+    return render(request, 'Accounts.html')   # ← capital A, matches the actual file
 
 
 @login_required
@@ -93,10 +55,6 @@ def transaction(request):
     ).order_by('-date', '-created_at')
     return render(request, 'transaction.html', {'transactions': transactions})
 
-
-# ─────────────────────────────────────────────────────────────────────────────
-# API — categories
-# ─────────────────────────────────────────────────────────────────────────────
 
 @login_required
 def api_categories(request):
@@ -127,10 +85,6 @@ def category_delete(request, pk):
         return JsonResponse({'message': 'Category not found'}, status=404)
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# API — transactions
-# ─────────────────────────────────────────────────────────────────────────────
-
 @require_http_methods(['POST'])
 @login_required
 def api_transactions(request):
@@ -144,22 +98,17 @@ def api_transactions(request):
         txn_type     = payload.get('type', 'expense')
 
         if amount is None or date is None or not category_val:
-            return JsonResponse(
-                {'message': 'amount, date and category are required'}, status=400
-            )
-
-        if account not in VALID_ACCOUNTS:
-            return JsonResponse({'message': 'Invalid account'}, status=400)
+            return JsonResponse({'message': 'amount, date and category are required'}, status=400)
 
         amount = float(amount)
 
         if txn_type == 'expense':
-            account_balance = _account_balance(user, account)
-            if amount > account_balance:
+            remaining = _overall_balance(user)
+            if amount > remaining:
                 return JsonResponse({
                     'message': (
-                        f'Insufficient balance in {account.title()} account. '
-                        f'Available: ₹{account_balance:,.2f} — '
+                        f'Insufficient balance. '
+                        f'Remaining: ₹{remaining:,.2f} — '
                         f'Expense: ₹{amount:,.2f}.'
                     )
                 }, status=400)
@@ -194,17 +143,11 @@ def api_delete_transactions(request):
         ids = payload.get('ids', [])
         if not ids:
             return JsonResponse({'message': 'No IDs provided'}, status=400)
-        deleted_count, _ = Transaction.objects.filter(
-            id__in=ids, user=request.user
-        ).delete()
+        deleted_count, _ = Transaction.objects.filter(id__in=ids, user=request.user).delete()
         return JsonResponse({'message': f'Deleted {deleted_count} transactions'})
     except Exception as e:
         return JsonResponse({'message': str(e)}, status=400)
 
-
-# ─────────────────────────────────────────────────────────────────────────────
-# API — balances  (cash + bank + savings + overall)
-# ─────────────────────────────────────────────────────────────────────────────
 
 @login_required
 def api_balances(request):
@@ -212,14 +155,9 @@ def api_balances(request):
     return JsonResponse({
         'cash':    _account_balance(user, 'cash'),
         'bank':    _account_balance(user, 'bank'),
-        'savings': _account_balance(user, 'savings'),
         'overall': _overall_balance(user),
     })
 
-
-# ─────────────────────────────────────────────────────────────────────────────
-# API — transfer
-# ─────────────────────────────────────────────────────────────────────────────
 
 @require_http_methods(['POST'])
 @login_required
@@ -234,11 +172,6 @@ def api_transfer(request):
 
         if not all([from_account, to_account, amount, date]):
             return JsonResponse({'message': 'All fields are required'}, status=400)
-
-        if from_account not in VALID_ACCOUNTS:
-            return JsonResponse({'message': f'Invalid source account'}, status=400)
-        if to_account not in VALID_ACCOUNTS:
-            return JsonResponse({'message': f'Invalid destination account'}, status=400)
 
         if from_account == to_account:
             return JsonResponse(
@@ -283,29 +216,24 @@ def api_transfer(request):
         return JsonResponse({'message': str(e)}, status=400)
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# API — summary (overview page)   ?period=7d|30d|1m|6m|1y
-# ─────────────────────────────────────────────────────────────────────────────
-
 @login_required
 def api_summary(request):
-    user   = request.user
-    period = request.GET.get('period', '6m')
-    cutoff, trunc_fn, _ = _period_params(period)
+    user = request.user
+    cutoff = _six_months_ago()
 
-    total_income  = Transaction.objects.filter(user=user, type='income') \
+    total_income  = Transaction.objects.filter(user=user, type='income')\
                                         .aggregate(t=Sum('amount'))['t'] or 0
-    total_expense = Transaction.objects.filter(user=user, type='expense') \
+    total_expense = Transaction.objects.filter(user=user, type='expense')\
                                         .aggregate(t=Sum('amount'))['t'] or 0
 
-    def series_qs(txn_type):
+    def monthly_qs(txn_type):
         return (
             Transaction.objects
             .filter(user=user, type=txn_type, date__gte=cutoff)
-            .annotate(period=trunc_fn('date'))
-            .values('period')
+            .annotate(month=TruncMonth('date'))
+            .values('month')
             .annotate(total=Sum('amount'))
-            .order_by('period')
+            .order_by('month')
         )
 
     cat_expenses = (
@@ -327,9 +255,8 @@ def api_summary(request):
         'total_income':  float(total_income),
         'total_expense': float(total_expense),
         'balance':       float(total_income) - float(total_expense),
-        'period':        period,
-        'monthly_income':  _fmt_series(series_qs('income')),
-        'monthly_expense': _fmt_series(series_qs('expense')),
+        'monthly_income':  _fmt_monthly(monthly_qs('income')),
+        'monthly_expense': _fmt_monthly(monthly_qs('expense')),
         'category_expenses': [
             {'name': c['category__name'], 'total': float(c['total'])}
             for c in cat_expenses
@@ -347,32 +274,27 @@ def api_summary(request):
     })
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# API — account summary   ?period=7d|30d|1m|6m|1y
-# ─────────────────────────────────────────────────────────────────────────────
-
 @login_required
 def api_account_summary(request, account):
-    if account not in VALID_ACCOUNTS:
+    if account not in ('cash', 'bank'):
         return JsonResponse({'message': 'Unknown account'}, status=400)
 
     user   = request.user
-    period = request.GET.get('period', '6m')
-    cutoff, trunc_fn, _ = _period_params(period)
+    cutoff = _six_months_ago()
 
-    inflow  = Transaction.objects.filter(user=user, account=account, type='income') \
+    inflow  = Transaction.objects.filter(user=user, account=account, type='income')\
                                   .aggregate(t=Sum('amount'))['t'] or 0
-    outflow = Transaction.objects.filter(user=user, account=account, type='expense') \
+    outflow = Transaction.objects.filter(user=user, account=account, type='expense')\
                                   .aggregate(t=Sum('amount'))['t'] or 0
 
-    def series_qs(txn_type):
+    def monthly_qs(txn_type):
         return (
             Transaction.objects
             .filter(user=user, account=account, type=txn_type, date__gte=cutoff)
-            .annotate(period=trunc_fn('date'))
-            .values('period')
+            .annotate(month=TruncMonth('date'))
+            .values('month')
             .annotate(total=Sum('amount'))
-            .order_by('period')
+            .order_by('month')
         )
 
     cat_expenses = (
@@ -395,9 +317,8 @@ def api_account_summary(request, account):
         'inflow':  float(inflow),
         'outflow': float(outflow),
         'balance': float(inflow) - float(outflow),
-        'period':  period,
-        'monthly_income':  _fmt_series(series_qs('income')),
-        'monthly_expense': _fmt_series(series_qs('expense')),
+        'monthly_income':  _fmt_monthly(monthly_qs('income')),
+        'monthly_expense': _fmt_monthly(monthly_qs('expense')),
         'category_expenses': [
             {'name': c['category__name'], 'total': float(c['total'])}
             for c in cat_expenses
