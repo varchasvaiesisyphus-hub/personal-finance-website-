@@ -1,17 +1,11 @@
 """
-ai_pipeline/models.py
-
-Models for the AI pipeline app.
-Updated for Milestone 3: AIInsight now carries all suggestion fields.
+ai_pipeline/models.py  (Milestone 4 — adds feedback field)
 """
-
 from django.contrib.auth.models import User
 from django.db import models
 
 
 class AIPreferences(models.Model):
-    """Per-user toggle for AI insight generation."""
-
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="ai_preferences")
     ai_enabled = models.BooleanField(default=True)
 
@@ -20,31 +14,30 @@ class AIPreferences(models.Model):
 
 
 class AIInsight(models.Model):
-    """
-    A single persisted LLM-generated suggestion for a user.
-
-    Milestone 2 used action/payload/days.
-    Milestone 3 adds explanation, estimated_monthly_saving, confidence,
-    next_step, tags so each row is self-contained.
-    """
-
     CONFIDENCE_CHOICES = [
         ("high", "High"),
         ("medium", "Medium"),
         ("low", "Low"),
     ]
+    FEEDBACK_CHOICES = [
+        ("accept", "accept"),
+        ("reject", "reject"),
+    ]
 
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="ai_insights")
 
-    # ── Core suggestion fields (Milestone 3) ──
+    # ── Milestone 3 suggestion fields ──
     action = models.CharField(max_length=255)
     explanation = models.TextField(blank=True, default="")
     estimated_monthly_saving = models.FloatField(null=True, blank=True)
-    confidence = models.CharField(
-        max_length=10, choices=CONFIDENCE_CHOICES, default="medium"
-    )
+    confidence = models.CharField(max_length=10, choices=CONFIDENCE_CHOICES, default="medium")
     next_step = models.TextField(blank=True, default="")
     tags = models.JSONField(default=list)
+
+    # ── Milestone 4: user feedback ──
+    feedback = models.CharField(
+        max_length=10, choices=FEEDBACK_CHOICES, null=True, blank=True
+    )
 
     # ── Legacy Milestone 2 fields ──
     payload = models.JSONField(default=dict, blank=True)

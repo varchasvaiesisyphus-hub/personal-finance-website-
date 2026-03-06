@@ -155,6 +155,7 @@ def api_balances(request):
     return JsonResponse({
         'cash':    _account_balance(user, 'cash'),
         'bank':    _account_balance(user, 'bank'),
+        'savings': _account_balance(user, 'savings'),
         'overall': _overall_balance(user),
     })
 
@@ -276,7 +277,7 @@ def api_summary(request):
 
 @login_required
 def api_account_summary(request, account):
-    if account not in ('cash', 'bank'):
+    if account not in ('cash', 'bank', 'savings'):
         return JsonResponse({'message': 'Unknown account'}, status=400)
 
     user   = request.user

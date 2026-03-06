@@ -846,3 +846,272 @@ tr[data-type="income"] .amount-cell {
     min-height: 16px;
     text-align: right;
 }
+
+
+/* =====================================================
+   GARVIS AI INSIGHTS  — append to static/style.css
+===================================================== */
+
+/* ── Section wrapper ── */
+.garvis-section {
+  max-width: 960px;
+  margin: 0 auto 28px;
+  padding: 0 20px;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+.garvis-section-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.garvis-section-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  background: linear-gradient(135deg, #003366, #00b89c);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.garvis-section-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0;
+}
+
+.garvis-section-sub {
+  font-size: 13px;
+  color: #6b7280;
+  margin: 0 0 0 auto;
+}
+
+/* ── Cards grid ── */
+#garvis-insights-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+/* ── Individual card ── */
+.garvis-card {
+  background: #ffffff;
+  border-radius: 16px;
+  border: 1px solid #e5e7eb;
+  padding: 20px 22px;
+  box-shadow: 0 4px 16px rgba(0, 51, 102, 0.07);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transition: transform 0.18s, box-shadow 0.18s;
+  position: relative;
+  overflow: hidden;
+}
+
+.garvis-card::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 4px;
+  background: linear-gradient(180deg, #003366, #00e6c3);
+  border-radius: 16px 0 0 16px;
+}
+
+.garvis-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 30px rgba(0, 51, 102, 0.12);
+}
+
+/* Accepted / rejected tint */
+.garvis-card--accepted {
+  border-color: #a7f3d0;
+  background: #f0fdf9;
+}
+.garvis-card--accepted::before { background: #0a7d35; }
+
+.garvis-card--rejected {
+  border-color: #fecaca;
+  background: #fff5f5;
+  opacity: 0.7;
+}
+.garvis-card--rejected::before { background: #b00020; }
+
+/* ── Card header ── */
+.garvis-card-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.garvis-card-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #003366, #00b89c);
+  color: #fff;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.garvis-card-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #111827;
+  line-height: 1.4;
+  flex: 1;
+}
+
+/* ── Body text ── */
+.garvis-card-body {
+  font-size: 13px;
+  color: #374151;
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* ── Saving amount ── */
+.garvis-saving {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #0a7d35;
+  background: #e6f7ec;
+  padding: 4px 10px;
+  border-radius: 20px;
+  width: fit-content;
+}
+
+/* ── Next step ── */
+.garvis-next-step {
+  font-size: 12px;
+  color: #6b7280;
+  background: #f9fafb;
+  border-radius: 8px;
+  padding: 8px 10px;
+  border: 1px solid #f1f5f9;
+}
+
+.garvis-next-label {
+  font-weight: 700;
+  color: #374151;
+}
+
+/* ── Tags ── */
+.garvis-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.garvis-tag {
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: 12px;
+  background: #eef2ff;
+  color: #3730a3;
+  font-weight: 500;
+}
+
+/* ── Confidence badge ── */
+.garvis-confidence {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.garvis-conf-high   { background: #dcfce7; color: #166534; }
+.garvis-conf-medium { background: #fef9c3; color: #854d0e; }
+.garvis-conf-low    { background: #fee2e2; color: #991b1b; }
+
+/* ── Action buttons ── */
+.garvis-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-top: 4px;
+  flex-wrap: wrap;
+}
+
+.garvis-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 7px 14px;
+  border-radius: 8px;
+  border: none;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: opacity 0.15s, transform 0.12s;
+}
+.garvis-btn:hover:not([disabled]) { opacity: 0.85; transform: translateY(-1px); }
+.garvis-btn:active                { transform: translateY(0); }
+.garvis-btn[disabled]             { opacity: 0.45; cursor: not-allowed; }
+
+.garvis-btn-accept {
+  background: linear-gradient(135deg, #0a7d35, #00b89c);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(10, 125, 53, 0.25);
+}
+
+.garvis-btn-dismiss {
+  background: #f3f4f6;
+  color: #374151;
+  border: 1px solid #e5e7eb;
+}
+.garvis-btn-dismiss:hover:not([disabled]) { background: #fee2e2; color: #b91c1c; border-color: #fecaca; }
+
+.garvis-feedback-msg {
+  font-size: 12px;
+  color: #6b7280;
+  margin-left: auto;
+}
+
+/* ── Loading / empty / error states ── */
+.garvis-state-loading,
+.garvis-state-empty,
+.garvis-state-error {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 32px 20px;
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.garvis-empty-icon { font-size: 36px; margin-bottom: 8px; }
+.garvis-empty-sub  { font-size: 12px; color: #9ca3af; margin: 4px 0 0; }
+.garvis-state-error { color: #b91c1c; }
+
+.garvis-spinner {
+  width: 22px;
+  height: 22px;
+  border: 2px solid #e5e7eb;
+  border-top-color: #00b89c;
+  border-radius: 50%;
+  animation: garvis-spin 0.7s linear infinite;
+  margin: 0 auto 8px;
+}
+@keyframes garvis-spin { to { transform: rotate(360deg); } }
+
+@media (max-width: 720px) {
+  #garvis-insights-container { grid-template-columns: 1fr; }
+}
