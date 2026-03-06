@@ -40,6 +40,7 @@ def api_latest_insights(request):
     """
     GET /api/ai/insights/latest/
     Returns the latest 3 AIInsight rows for the logged-in user.
+    If no insights exist yet, generates them on-demand before responding.
     Results are cached per-user for 30 seconds.
     """
     cache_key = f"garvis_insights_{request.user.pk}"
@@ -47,12 +48,38 @@ def api_latest_insights(request):
     if cached is not None:
         return JsonResponse({"insights": cached})
 
-    insights = (
+    insights = list(
         AIInsight.objects
         .filter(user=request.user)
         .exclude(action="draft_pipeline_output")  # skip Milestone 2 drafts
         .order_by("-created_at")[:3]
     )
+
+    # ── Lazy generation: if no insights exist, generate them now ──────────
+    # This handles users who have never triggered the signal-based pipeline
+    # (e.g. existing users, or fresh installs before any transaction is saved).
+    if not insights:
+        try:
+            from .insights import generate_insights_for_user  # noqa: PLC0415
+            result = generate_insights_for_user(request.user.pk)
+            logger.info(
+                "On-demand insight generation for user %s: %s",
+                request.user.pk, result.get("status"),
+            )
+            if result.get("status") == "ok":
+                # Re-query so the freshly-saved rows are returned
+                insights = list(
+                    AIInsight.objects
+                    .filter(user=request.user)
+                    .exclude(action="draft_pipeline_output")
+                    .order_by("-created_at")[:3]
+                )
+        except Exception as exc:
+            logger.error(
+                "On-demand insight generation failed for user %s: %s",
+                request.user.pk, exc,
+            )
+
     data = [_insight_to_dict(i) for i in insights]
     cache.set(cache_key, data, _CACHE_TTL)
     return JsonResponse({"insights": data})

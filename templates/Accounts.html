@@ -214,7 +214,9 @@
             <button class="period-pill" data-period="1y">1Y</button>
           </div>
         </div>
-        <div class="chart-wrap">
+        <!-- BUG FIX: stable id="line-chart-wrap" so loadAccount can always find this
+             container even after buildLineChart replaces the canvas with an empty-state div -->
+        <div class="chart-wrap" id="line-chart-wrap">
           <div class="chart-loading" id="line-loading">Loading…</div>
           <canvas id="lineChart"></canvas>
         </div>
@@ -223,7 +225,8 @@
         <div class="chart-header">
           <h3 id="pie-title">Cash — Expense Breakdown</h3>
         </div>
-        <div class="chart-wrap">
+        <!-- BUG FIX: stable id="pie-chart-wrap" for the same reason -->
+        <div class="chart-wrap" id="pie-chart-wrap">
           <div class="chart-loading" id="pie-loading">Loading…</div>
           <canvas id="pieChart"></canvas>
         </div>
@@ -261,8 +264,8 @@
 
     function fmtLabel(dateStr, period) {
       const d = new Date(dateStr.length === 7
-        ? dateStr + '-01T00:00:00'   // "YYYY-MM" → "YYYY-MM-01T00:00:00"
-        : dateStr + 'T00:00:00'      // "YYYY-MM-DD" → already full date
+        ? dateStr + '-01T00:00:00'
+        : dateStr + 'T00:00:00'
       );
       if (period === '7d' || period === '30d' || period === '1m') {
         return d.toLocaleDateString('default', {month:'short', day:'numeric'});
@@ -282,16 +285,30 @@
       };
     }
 
+    // ── BUG FIX: restore canvas contents using the stable wrapper IDs
+    //    Previously used querySelector('#lineChart')?.parentElement which returned
+    //    null after buildLineChart had replaced the canvas with an empty-state div,
+    //    causing every subsequent tab switch to silently skip canvas restoration.
+    function _resetChartWrap(wrapId, loadingId, canvasId) {
+      const wrap = document.getElementById(wrapId);
+      if (!wrap) return;
+      wrap.innerHTML =
+        `<div class="chart-loading" id="${loadingId}">Loading…</div>` +
+        `<canvas id="${canvasId}"></canvas>`;
+    }
+
     function buildLineChart(monthly_income, monthly_expense, period) {
       const ctx     = document.getElementById('lineChart');
       const loading = document.getElementById('line-loading');
       if (!ctx) return;
-      if (lineChart) lineChart.destroy();
+      if (lineChart) { lineChart.destroy(); lineChart = null; }
       if (loading) loading.style.display = 'none';
 
       const { labels, incomes, expenses } = mergeMonths(monthly_income, monthly_expense, period);
 
       if (!labels.length) {
+        // Replace canvas with empty state — safe because loadAccount now uses
+        // the stable #line-chart-wrap ID to restore this content on next switch.
         ctx.parentElement.innerHTML = '<div class="empty-state"><div class="empty-icon">📈</div>No data for this period</div>';
         return;
       }
@@ -336,7 +353,7 @@
       const ctx     = document.getElementById('pieChart');
       const loading = document.getElementById('pie-loading');
       if (!ctx) return;
-      if (pieChart) pieChart.destroy();
+      if (pieChart) { pieChart.destroy(); pieChart = null; }
       if (loading) loading.style.display = 'none';
 
       if (!cat_expenses.length) {
@@ -380,20 +397,16 @@
     }
 
     async function loadAccount(account, period) {
-      // Reset
-      ['line-loading','pie-loading'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) { el.style.display = 'flex'; }
-      });
+      // Destroy existing chart instances
       if (lineChart) { lineChart.destroy(); lineChart = null; }
       if (pieChart)  { pieChart.destroy();  pieChart  = null; }
 
-      // Restore canvas elements
-      const lineWrap = document.querySelector('#lineChart')?.parentElement;
-      const pieWrap  = document.querySelector('#pieChart')?.parentElement;
-      if (lineWrap) lineWrap.innerHTML = '<div class="chart-loading" id="line-loading">Loading…</div><canvas id="lineChart"></canvas>';
-      if (pieWrap)  pieWrap.innerHTML  = '<div class="chart-loading" id="pie-loading">Loading…</div><canvas id="pieChart"></canvas>';
+      // BUG FIX: use the stable wrapper IDs — not the canvas element — so we
+      // can always restore the canvas even when it was replaced by an empty-state div.
+      _resetChartWrap('line-chart-wrap', 'line-loading', 'lineChart');
+      _resetChartWrap('pie-chart-wrap',  'pie-loading',  'pieChart');
 
+      // Reset stat cards to skeleton state
       ['val-inflow','val-outflow','val-balance'].forEach(id => {
         document.getElementById(id).innerHTML = '<span class="skeleton" style="height:28px;width:90px;display:block;"></span>';
       });
