@@ -133,7 +133,7 @@ def generate_insights_for_user(user_id: int) -> dict:
         raise
 
     # ── 7. Cache the hash so repeated runs are free ──
-    cache.set(hash_cache_key, payload_hash, 60 * 60 * 24)  # 24 hours
+    cache.set(hash_cache_key, payload_hash, 60 * 60 * 6) 
 
     logger.info("Saved %d insights for user %s: ids=%s", len(saved_ids), user_id, saved_ids)
     return {"status": "ok", "saved": saved_ids}

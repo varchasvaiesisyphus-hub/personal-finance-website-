@@ -52,7 +52,7 @@ def trim_payload(payload: dict) -> dict:
 
 def build_prompt(payload: dict, previous_feedback: list[dict] | None = None) -> str:
     trimmed = trim_payload(payload)
-    payload_json = json.dumps(payload, separators=(",", ":"), default=str)
+    payload_json = json.dumps(trimmed, separators=(",", ":"), default=str)
 
     if previous_feedback:
         lines = [

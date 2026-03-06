@@ -294,8 +294,30 @@
         <a href="{% url 'accounts' %}"    class="button-link">Accounts</a>
         <a href="{% url 'transaction' %}" class="button-link">Transactions</a>
       </div>
+      <div class="profile-wrapper" id="profileWrapper">
+        <div class="profile-avatar" id="profileAvatar">{{ request.user.username|slice:":1"|upper }}</div>
+        <div class="profile-dropdown" id="profileDropdown">
+          <div class="profile-dropdown-header">
+            <div class="pd-name">{{ request.user.username|capfirst }}</div>
+            <div class="pd-role">Personal Finance</div>
+          </div>
+          <a href="{% url 'accounts' %}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="3"/></svg>
+            Accounts
+          </a>
+          <a href="{% url 'transaction' %}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/></svg>
+            Transactions
+          </a>
+          <a href="#" class="logout" onclick="event.preventDefault();document.getElementById('logout-form').submit();">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            Log out
+          </a>
+        </div>
+      </div>
     </div>
   </header>
+  <form id="logout-form" method="post" action="{% url 'logout' %}" style="display:none;">{% csrf_token %}</form>
 
   <main>
 
@@ -494,6 +516,13 @@
 
     loadSummary();
   })();
+  </script>
+  <script>
+    const pw = document.getElementById('profileWrapper');
+    const pa = document.getElementById('profileAvatar');
+    const pd = document.getElementById('profileDropdown');
+    pa.addEventListener('click', e => { e.stopPropagation(); pd.classList.toggle('open'); });
+    document.addEventListener('click', e => { if (!pw.contains(e.target)) pd.classList.remove('open'); });
   </script>
 </body>
 </html>

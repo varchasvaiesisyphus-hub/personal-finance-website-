@@ -18,7 +18,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
-    'core',
+    'core.apps.CoreConfig',
     'ai_pipeline',  
 ]
 

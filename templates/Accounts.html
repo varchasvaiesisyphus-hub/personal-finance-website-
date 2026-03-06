@@ -15,23 +15,6 @@
     }
     main { max-width:960px; margin:0 auto; padding:28px 20px 48px; }
 
-    /* Profile avatar */
-    .profile-wrapper { position:relative; display:inline-block; }
-    .profile-avatar {
-      width:38px; height:38px; border-radius:50%;
-      background:rgba(255,255,255,.25); border:2px solid rgba(255,255,255,.6);
-      color:#fff; font-size:15px; font-weight:700;
-      display:flex; align-items:center; justify-content:center;
-      cursor:pointer; font-family:system-ui,sans-serif;
-      transition:background .18s,transform .15s; user-select:none; text-transform:uppercase;
-    }
-    .profile-avatar:hover { background:rgba(255,255,255,.38); transform:scale(1.06); }
-    .profile-dropdown {
-      display:none; position:absolute; right:0; top:calc(100% + 10px);
-      min-width:180px; background:#fff; border:1px solid var(--border);
-      border-radius:12px; box-shadow:0 12px 36px rgba(0,51,102,.14);
-      z-index:1000; overflow:hidden; animation:dropIn .15s ease-out;
-    }
     @keyframes dropIn { from{opacity:0;transform:translateY(-6px)} to{opacity:1;transform:translateY(0)} }
     .profile-dropdown.open { display:block; }
     .profile-dropdown-header { padding:14px 16px 10px; border-bottom:1px solid var(--border); }
@@ -277,7 +260,10 @@
     let activePeriod   = '6m';
 
     function fmtLabel(dateStr, period) {
-      const d = new Date(dateStr + 'T00:00:00');
+      const d = new Date(dateStr.length === 7
+        ? dateStr + '-01T00:00:00'   // "YYYY-MM" → "YYYY-MM-01T00:00:00"
+        : dateStr + 'T00:00:00'      // "YYYY-MM-DD" → already full date
+      );
       if (period === '7d' || period === '30d' || period === '1m') {
         return d.toLocaleDateString('default', {month:'short', day:'numeric'});
       }

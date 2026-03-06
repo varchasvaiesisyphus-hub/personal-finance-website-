@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="{% static 'style.css' %}">
   <meta name="csrf-token" content="{{ csrf_token }}">
-  <script src="{% static 'main.js' %}" defer></script>
+  <script src="{% static 'js/main.js' %}" defer></script>
   <title>Transactions</title>
 
   <style>
@@ -20,23 +20,6 @@
       --text:   #111827;
     }
 
-    /* ── Profile Avatar ── */
-    .profile-wrapper { position:relative; display:inline-block; }
-    .profile-avatar {
-      width:38px; height:38px; border-radius:50%;
-      background:rgba(255,255,255,0.25); border:2px solid rgba(255,255,255,0.6);
-      color:#fff; font-size:15px; font-weight:700;
-      display:flex; align-items:center; justify-content:center;
-      cursor:pointer; font-family:system-ui,-apple-system,sans-serif;
-      transition:background .18s,transform .15s; user-select:none; text-transform:uppercase;
-    }
-    .profile-avatar:hover { background:rgba(255,255,255,0.38); transform:scale(1.06); }
-    .profile-dropdown {
-      display:none; position:absolute; right:0; top:calc(100% + 10px);
-      min-width:180px; background:#fff; border:1px solid var(--border);
-      border-radius:12px; box-shadow:0 12px 36px rgba(0,51,102,0.14);
-      z-index:1000; overflow:hidden; animation:dropIn .15s ease-out;
-    }
     @keyframes dropIn { from{opacity:0;transform:translateY(-6px)} to{opacity:1;transform:translateY(0)} }
     .profile-dropdown.open { display:block; }
     .profile-dropdown-header { padding:14px 16px 10px; border-bottom:1px solid var(--border); }

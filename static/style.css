@@ -1,4 +1,19 @@
 /* =====================================================
+   CSS VARIABLES
+===================================================== */
+:root {
+  --navy:   #003366;
+  --teal:   #00e6c3;
+  --teal2:  #00b89c;
+  --red:    #b00020;
+  --green:  #0a7d35;
+  --bg:     #eef3f7;
+  --card:   #ffffff;
+  --border: #e5e7eb;
+  --muted:  #6b7280;
+  --text:   #111827;
+}
+/* =====================================================
    BASE
 ===================================================== */
 body {
@@ -1115,3 +1130,36 @@ tr[data-type="income"] .amount-cell {
 @media (max-width: 720px) {
   #garvis-insights-container { grid-template-columns: 1fr; }
 }
+/* =====================================================
+   PROFILE AVATAR & DROPDOWN
+===================================================== */
+.profile-wrapper { position: relative; display: inline-block; }
+.profile-avatar {
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(255,255,255,0.25); border: 2px solid rgba(255,255,255,0.6);
+  color: #fff; font-size: 15px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; font-family: system-ui, -apple-system, sans-serif;
+  transition: background .18s, transform .15s; user-select: none; text-transform: uppercase;
+}
+.profile-avatar:hover { background: rgba(255,255,255,0.38); transform: scale(1.06); }
+.profile-dropdown {
+  display: none; position: absolute; right: 0; top: calc(100% + 10px);
+  min-width: 180px; background: #fff; border: 1px solid var(--border);
+  border-radius: 12px; box-shadow: 0 12px 36px rgba(0,51,102,0.14);
+  z-index: 1000; overflow: hidden; animation: dropIn .15s ease-out;
+}
+@keyframes dropIn { from { opacity:0; transform: translateY(-6px); } to { opacity:1; transform: translateY(0); } }
+.profile-dropdown.open { display: block; }
+.profile-dropdown-header { padding: 14px 16px 10px; border-bottom: 1px solid var(--border); }
+.pd-name { font-size: 14px; font-weight: 700; color: var(--text); font-family: system-ui, sans-serif; }
+.pd-role { font-size: 11px; color: var(--muted); margin-top: 1px; }
+.profile-dropdown a {
+  display: flex; align-items: center; gap: 10px; padding: 10px 16px;
+  font-size: 13px; color: var(--text); text-decoration: none;
+  font-family: system-ui, sans-serif; transition: background .12s;
+}
+.profile-dropdown a:hover { background: #f3f4f6; }
+.profile-dropdown a.logout { color: #b91c1c; border-top: 1px solid var(--border); }
+.profile-dropdown a.logout:hover { background: #fff1f1; }
+.profile-dropdown a svg { width: 15px; height: 15px; flex-shrink: 0; }
