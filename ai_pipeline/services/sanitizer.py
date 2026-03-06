@@ -31,16 +31,16 @@ logger = logging.getLogger(__name__)
 # ──────────────────────────────────────────────────────────────────────────────
 
 _PATTERNS: List[tuple[re.Pattern, str]] = [
-    # UPI VPA  e.g. user@upi, name@okicici – must come before generic email
+    # UPI VPA — must come before generic email
     (re.compile(r"\b[a-zA-Z0-9.\-_+]+@(?:upi|okicici|okhdfcbank|okaxis|oksbi|ybl|ibl|rbl|apl|paytm|freecharge|mobikwik)\b", re.IGNORECASE), "[UPI_VPA]"),
     # Generic email
     (re.compile(r"\b[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}\b"), "[EMAIL]"),
-    # 10+ consecutive digit sequence (card numbers, PAN, account numbers)
-    (re.compile(r"\b\d{10,}\b"), "[ACCOUNT_NUMBER]"),
-    # Phone: optional country code + 10 digits, with optional separators
-    (re.compile(r"(?:\+91[\s\-]?)?[6-9]\d{9}\b"), "[PHONE]"),
-    # Spaced credit-card style  e.g. 4321 1234 5678 9012
+    # Spaced credit-card style e.g. 4321 1234 5678 9012
     (re.compile(r"\b\d{4}[\s\-]\d{4}[\s\-]\d{4}[\s\-]\d{4}\b"), "[ACCOUNT_NUMBER]"),
+    # Phone — exactly 10 digits starting with 6-9, run BEFORE bare digit catch-all
+    (re.compile(r"(?<!\d)(?:\+91[\s\-]?)?[6-9]\d{9}(?!\d)"), "[PHONE]"),
+    # 11+ consecutive digits — PAN, card, account numbers (not phones)
+    (re.compile(r"\b\d{11,}\b"), "[ACCOUNT_NUMBER]"),
 ]
 
 
