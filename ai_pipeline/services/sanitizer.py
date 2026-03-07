@@ -3,16 +3,8 @@ ai_pipeline/services/sanitizer.py
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 PII redaction and merchant normalisation.
 
-Redacts:
-  - Email addresses          → [EMAIL]
-  - 10+ digit sequences      → [ACCOUNT_NUMBER]  (PAN, card, account numbers)
-  - Phone-like patterns      → [PHONE]
-  - UPI VPAs (user@bank)     → [UPI_VPA]
-
-A ``sanitization_log`` dict tracks how many fields were changed and provides
-redacted examples (at most 5 distinct patterns).
-
-The sanitizer is PURE: it never writes to the database.
+Now exposes the ``reason`` field on SanitisedTransaction so the pipeline
+can forward it to the prompt builder for personalised suggestions.
 """
 
 from __future__ import annotations
@@ -25,21 +17,11 @@ from core.models import Transaction
 
 logger = logging.getLogger(__name__)
 
-
-# ──────────────────────────────────────────────────────────────────────────────
-# Compiled patterns (order matters – applied left to right)
-# ──────────────────────────────────────────────────────────────────────────────
-
 _PATTERNS: List[tuple[re.Pattern, str]] = [
-    # UPI VPA — must come before generic email
     (re.compile(r"\b[a-zA-Z0-9.\-_+]+@(?:upi|okicici|okhdfcbank|okaxis|oksbi|ybl|ibl|rbl|apl|paytm|freecharge|mobikwik)\b", re.IGNORECASE), "[UPI_VPA]"),
-    # Generic email
     (re.compile(r"\b[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}\b"), "[EMAIL]"),
-    # Spaced credit-card style e.g. 4321 1234 5678 9012
     (re.compile(r"\b\d{4}[\s\-]\d{4}[\s\-]\d{4}[\s\-]\d{4}\b"), "[ACCOUNT_NUMBER]"),
-    # Phone — exactly 10 digits starting with 6-9, run BEFORE bare digit catch-all
     (re.compile(r"(?<!\d)(?:\+91[\s\-]?)?[6-9]\d{9}(?!\d)"), "[PHONE]"),
-    # 11+ consecutive digits — PAN, card, account numbers (not phones)
     (re.compile(r"\b\d{11,}\b"), "[ACCOUNT_NUMBER]"),
 ]
 
@@ -52,21 +34,13 @@ class SanitisedTransaction(NamedTuple):
     category: str
     amount: float
     sanitized_description: str
+    reason: str           # user-entered reason, PII-redacted
     was_redacted: bool
 
 
-# ──────────────────────────────────────────────────────────────────────────────
-# Core redaction
-# ──────────────────────────────────────────────────────────────────────────────
-
 def _redact(text: str, examples: List[str]) -> tuple[str, bool]:
-    """
-    Apply all PII patterns to ``text``.  Returns (sanitised_text, changed).
-    Appends up to 5 unique redaction examples to ``examples`` list.
-    """
     if not text:
         return text, False
-
     original = text
     for pattern, placeholder in _PATTERNS:
         matches = pattern.findall(text)
@@ -74,7 +48,6 @@ def _redact(text: str, examples: List[str]) -> tuple[str, bool]:
             if len(examples) < 5 and m not in examples:
                 examples.append(m)
         text = pattern.sub(placeholder, text)
-
     return text, text != original
 
 
@@ -100,21 +73,9 @@ def _tx_amount(tx: Transaction) -> float:
     return round(float(getattr(tx, "amount", 0) or 0), 2)
 
 
-# ──────────────────────────────────────────────────────────────────────────────
-# Public API
-# ──────────────────────────────────────────────────────────────────────────────
-
 def sanitize_transactions(
     transactions: List[Transaction],
 ) -> tuple[List[SanitisedTransaction], Dict[str, Any]]:
-    """
-    Sanitise a list of transactions in-memory.
-
-    Returns
-    -------
-    sanitised : list of SanitisedTransaction namedtuples
-    log       : dict with keys ``redacted_fields_count`` and ``redaction_examples``
-    """
     logger.info("Sanitising %d transactions", len(transactions))
 
     sanitised: List[SanitisedTransaction] = []
@@ -122,10 +83,13 @@ def sanitize_transactions(
     examples: List[str] = []
 
     for tx in transactions:
-        raw_desc = getattr(tx, "description", "") or ""
-        clean_desc, changed = _redact(raw_desc, examples)
+        raw_desc   = getattr(tx, "description", "") or ""
+        raw_reason = getattr(tx, "reason", "") or ""
 
-        if changed:
+        clean_desc,   changed_desc   = _redact(raw_desc,   examples)
+        clean_reason, changed_reason = _redact(raw_reason, examples)
+
+        if changed_desc or changed_reason:
             redacted_count += 1
 
         tx_date = getattr(tx, "date", None)
@@ -137,13 +101,14 @@ def sanitize_transactions(
                 category=_tx_category(tx),
                 amount=_tx_amount(tx),
                 sanitized_description=clean_desc,
-                was_redacted=changed,
+                reason=clean_reason,
+                was_redacted=changed_desc or changed_reason,
             )
         )
 
     log: Dict[str, Any] = {
         "redacted_fields_count": redacted_count,
-        "redaction_examples": examples[:5],
+        "redaction_examples":    examples[:5],
     }
 
     logger.info("Sanitisation complete: %d fields redacted", redacted_count)

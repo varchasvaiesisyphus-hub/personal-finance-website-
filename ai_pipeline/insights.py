@@ -1,7 +1,7 @@
 """
 ai_pipeline/insights.py
 """
-from __future__ import annotations  # ← must be FIRST line after docstring
+from __future__ import annotations
 
 import hashlib
 import json
@@ -32,10 +32,14 @@ def _get_ai_preferences_model():
 
 
 def get_adapter():
-    from ai_pipeline.llm.llm_adapter import ClaudeAdapter, MockAdapter, OpenAIAdapter
+    from ai_pipeline.llm.llm_adapter import (
+        ClaudeAdapter, GeminiAdapter, MockAdapter, OpenAIAdapter
+    )
     provider = os.environ.get("LLM_PROVIDER", "mock").lower().strip()
     if provider == "claude":
         return ClaudeAdapter()
+    if provider == "gemini":
+        return GeminiAdapter()
     if provider == "openai":
         return OpenAIAdapter()
     return MockAdapter()
@@ -48,20 +52,18 @@ _MAX_NEXT_STEP_LEN = 500
 
 def _sanitise_suggestion(raw: dict) -> dict:
     return {
-        "action":                    raw["action"][:_MAX_ACTION_LEN],
-        "explanation":               raw["explanation"][:_MAX_EXPLANATION_LEN],
-        "estimated_monthly_saving":  raw.get("estimated_monthly_saving_in_inr"),
-        "confidence":                raw["confidence"],
-        "next_step":                 raw["next_step"][:_MAX_NEXT_STEP_LEN],
-        "tags":                      raw.get("tags", []),
+        "action":                   raw["action"][:_MAX_ACTION_LEN],
+        "explanation":              raw["explanation"][:_MAX_EXPLANATION_LEN],
+        "estimated_monthly_saving": raw.get("estimated_monthly_saving_in_inr"),
+        "confidence":               raw["confidence"],
+        "next_step":                raw["next_step"][:_MAX_NEXT_STEP_LEN],
+        "tags":                     raw.get("tags", []),
     }
 
 
 def generate_insights_for_user(user_id: int) -> dict:
-    # ── 1. Load user ──
     user = User.objects.get(pk=user_id)
 
-    # ── 1b. Respect AIPreferences ──
     AIPreferences = _get_ai_preferences_model()
     if AIPreferences is not None:
         try:
@@ -72,12 +74,10 @@ def generate_insights_for_user(user_id: int) -> dict:
         except AIPreferences.DoesNotExist:
             pass
 
-    # ── 2. Pipeline payload ──
     days = int(os.environ.get("AI_PIPELINE_DAYS", 90))
     prepare_user_payload = _get_prepare_user_payload()
     payload = prepare_user_payload(user, days=days)
 
-    # ── TOKEN OPTIMIZATION: skip Claude if data hasn't changed ──
     payload_hash = hashlib.md5(
         json.dumps(payload, sort_keys=True, default=str).encode()
     ).hexdigest()
@@ -86,7 +86,6 @@ def generate_insights_for_user(user_id: int) -> dict:
         logger.info("Payload unchanged for user %s — skipping LLM call.", user_id)
         return {"status": "skipped", "reason": "data unchanged"}
 
-    # ── 3. Prompt (with previous feedback) ──
     from ai_pipeline.llm.prompt_builder import build_prompt
     AIInsight = _get_ai_insight_model()
 
@@ -94,25 +93,22 @@ def generate_insights_for_user(user_id: int) -> dict:
         AIInsight.objects
         .filter(user=user, feedback__isnull=False)
         .values("action", "feedback")
-        .order_by("-created_at")[:5]  # only last 5 to save tokens
+        .order_by("-created_at")[:5]
     )
 
     prompt = build_prompt(payload, previous_feedback=previous_feedback)
-    logger.debug("Prompt preview: %s", prompt[:300])
+    logger.debug("Prompt preview: %s", prompt[:500])
 
-    # ── 4. LLM call ──
     adapter = get_adapter()
     temperature = float(os.environ.get("LLM_TEMPERATURE", 0.2))
-    max_tokens  = int(os.environ.get("LLM_MAX_TOKENS", 400))  # reduced from 800
+    max_tokens  = int(os.environ.get("LLM_MAX_TOKENS", 8000))
     raw_response = adapter.generate(prompt, temperature=temperature, max_tokens=max_tokens)
-    logger.debug("LLM response preview: %s", raw_response[:300])
+    logger.debug("LLM response preview: %s", raw_response[:500])
 
-    # ── 5. Parse & validate ──
     from ai_pipeline.llm.parser import parse_llm_response
     parsed = parse_llm_response(raw_response)
     suggestions = parsed["suggestions"]
 
-    # ── 6. Persist ──
     saved_ids: list[int] = []
     try:
         with transaction.atomic():
@@ -132,8 +128,7 @@ def generate_insights_for_user(user_id: int) -> dict:
         logger.exception("DB error persisting insights for user %s — rolling back.", user_id)
         raise
 
-    # ── 7. Cache the hash so repeated runs are free ──
-    cache.set(hash_cache_key, payload_hash, 60 * 60 * 6) 
+    cache.set(hash_cache_key, payload_hash, 60 * 60 * 6)
 
     logger.info("Saved %d insights for user %s: ids=%s", len(saved_ids), user_id, saved_ids)
     return {"status": "ok", "saved": saved_ids}
