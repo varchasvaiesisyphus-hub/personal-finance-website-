@@ -1,11 +1,9 @@
 """
 ai_pipeline/services/metrics.py
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Fetch transactions for a user over a date window and compute aggregates:
-  - total income / expense
-  - average monthly expense
-  - per-category expense breakdown
-  - 3-month vs prior-3-month trend per category
+Fetch transactions for a user over a date window and compute aggregates.
+Transfer transactions (category name == 'Transfer') are excluded from all
+expense calculations to avoid double-counting.
 """
 
 from __future__ import annotations
@@ -23,17 +21,11 @@ from core.models import Transaction
 logger = logging.getLogger(__name__)
 
 
-# ──────────────────────────────────────────────────────────────────────────────
-# Helpers
-# ──────────────────────────────────────────────────────────────────────────────
-
 def _tx_amount(tx: Transaction) -> float:
-    """Safely convert a transaction's amount to float."""
     return round(float(getattr(tx, "amount", 0) or 0), 2)
 
 
 def _tx_category(tx: Transaction) -> str:
-    """Return a stable string label for the transaction's category."""
     cat = getattr(tx, "category", None)
     if cat is not None:
         return str(getattr(cat, "name", cat))
@@ -41,13 +33,15 @@ def _tx_category(tx: Transaction) -> str:
 
 
 def _month_key(d: date) -> str:
-    """Return 'YYYY-MM' for a date."""
     return f"{d.year:04d}-{d.month:02d}"
 
 
-# ──────────────────────────────────────────────────────────────────────────────
-# Public API
-# ──────────────────────────────────────────────────────────────────────────────
+def _is_transfer(tx: Transaction) -> bool:
+    """Return True if this transaction is a Transfer and should be excluded from expenses."""
+    cat = getattr(tx, "category", None)
+    cat_name = str(getattr(cat, "name", "")) if cat is not None else ""
+    return cat_name == "Transfer"
+
 
 def compute_metrics(
     user: User,
@@ -55,43 +49,31 @@ def compute_metrics(
     start_date: date,
     end_date: date,
 ) -> Dict[str, Any]:
-    """
-    Compute financial aggregates from a pre-fetched list of transactions.
-
-    Parameters
-    ----------
-    user:         The owning user (used only for logging).
-    transactions: All transactions in the look-back window (income + expense).
-    start_date:   Inclusive start of the window.
-    end_date:     Inclusive end of the window.
-
-    Returns
-    -------
-    A dict matching the ``metrics`` key of the orchestrator payload schema.
-    """
     logger.info("Computing metrics for user=%s (%d transactions)", user.pk, len(transactions))
 
-    total_income: float = 0.0
+    total_income:  float = 0.0
     total_expense: float = 0.0
 
-    # category → monthly totals  (for breakdown + trend)
     cat_monthly: Dict[str, Dict[str, float]] = defaultdict(lambda: defaultdict(float))
 
     for tx in transactions:
-        amt = _tx_amount(tx)
-        tx_type = getattr(tx, "type", "expense") or "expense"
+        amt      = _tx_amount(tx)
+        tx_type  = getattr(tx, "type", "expense") or "expense"
         tx_date: date = getattr(tx, "date", end_date)
         category = _tx_category(tx)
-        month = _month_key(tx_date)
+        month    = _month_key(tx_date)
 
         if tx_type == "income":
-            total_income += amt
-        else:
-            total_expense += amt
-            cat_monthly[category][month] += amt
+            # Only count non-transfer income (transfer income is already an outflow elsewhere)
+            if not _is_transfer(tx):
+                total_income += amt
+        elif tx_type == "expense":
+            # Exclude transfer transactions from expense totals
+            if not _is_transfer(tx):
+                total_expense += amt
+                cat_monthly[category][month] += amt
 
-    # ── Average monthly expense ──────────────────────────────────────────────
-    # Count distinct months that had *any* expense activity
+    # Average monthly expense
     all_expense_months: set[str] = set()
     for monthly in cat_monthly.values():
         all_expense_months.update(monthly.keys())
@@ -101,14 +83,13 @@ def compute_metrics(
     else:
         avg_monthly_expense = 0.0
 
-    # ── Category breakdown (total over the full window) ──────────────────────
+    # Category breakdown (total over the full window, transfers excluded)
     category_breakdown: Dict[str, float] = {
         cat: round(sum(monthly.values()), 2)
         for cat, monthly in cat_monthly.items()
     }
 
-    # ── 3-month trend ────────────────────────────────────────────────────────
-    # Determine the midpoint: 3 months back from end_date
+    # 3-month trend
     mid_date = _subtract_months(end_date, 3)
     trend: Dict[str, Dict[str, float]] = {}
 
@@ -122,37 +103,31 @@ def compute_metrics(
             delta_pct = round((last_3m - prev_3m) / prev_3m * 100, 2)
 
         trend[cat] = {
-            "last_3m": round(last_3m, 2),
-            "prev_3m": round(prev_3m, 2),
+            "last_3m":   round(last_3m, 2),
+            "prev_3m":   round(prev_3m, 2),
             "delta_pct": delta_pct,
         }
 
     logger.info(
-        "Metrics computed: income=%.2f expense=%.2f avg_monthly=%.2f categories=%d",
+        "Metrics: income=%.2f expense=%.2f avg_monthly=%.2f categories=%d",
         total_income, total_expense, avg_monthly_expense, len(category_breakdown),
     )
 
     return {
-        "total_income": round(total_income, 2),
-        "total_expense": round(total_expense, 2),
+        "total_income":        round(total_income, 2),
+        "total_expense":       round(total_expense, 2),
         "avg_monthly_expense": avg_monthly_expense,
-        "category_breakdown": category_breakdown,
-        "trend": trend,
+        "category_breakdown":  category_breakdown,
+        "trend":               trend,
     }
 
 
-# ──────────────────────────────────────────────────────────────────────────────
-# Utility
-# ──────────────────────────────────────────────────────────────────────────────
-
 def _subtract_months(d: date, months: int) -> date:
-    """Return a date that is ``months`` calendar months before ``d``."""
     month = d.month - months
-    year = d.year
+    year  = d.year
     while month <= 0:
         month += 12
-        year -= 1
-    # Clamp day to the last valid day of the target month
+        year  -= 1
     import calendar
     last_day = calendar.monthrange(year, month)[1]
     return date(year, month, min(d.day, last_day))

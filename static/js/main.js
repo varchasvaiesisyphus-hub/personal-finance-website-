@@ -7,6 +7,7 @@ window.__categoryCache = [];
     transactions: '/api/transactions/',
     balances:     '/api/balances/',
     transfer:     '/api/transfer/',
+    editTxn: (id) => `/api/transactions/${id}/edit/`,
   };
 
   function getCookie(name) {
@@ -21,7 +22,73 @@ window.__categoryCache = [];
     });
   }
 
-  // ── Inject Add-Transaction modal HTML (once) ─────────────────────
+  // ── Tooltip helper ───────────────────────────────────────────────
+  (function injectTooltipStyles() {
+    if (document.getElementById('txn-tooltip-style')) return;
+    const style = document.createElement('style');
+    style.id = 'txn-tooltip-style';
+    style.textContent = `
+      .txn-tooltip-wrap {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+      }
+      .txn-info-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 16px; height: 16px;
+        border-radius: 50%;
+        border: 1.5px solid #9ca3af;
+        color: #9ca3af;
+        font-size: 10px;
+        font-weight: 700;
+        cursor: default;
+        font-style: normal;
+        line-height: 1;
+        transition: border-color .15s, color .15s;
+        flex-shrink: 0;
+      }
+      .txn-info-icon:hover { border-color: #2563eb; color: #2563eb; }
+      .txn-tooltip-box {
+        visibility: hidden; opacity: 0;
+        position: absolute;
+        bottom: calc(100% + 6px);
+        left: 50%; transform: translateX(-50%);
+        background: #1f2937; color: #f9fafb;
+        font-size: 12px; font-weight: 400;
+        padding: 5px 10px; border-radius: 6px;
+        white-space: nowrap; pointer-events: none;
+        transition: opacity .15s;
+        z-index: 1000;
+        font-family: system-ui, -apple-system, sans-serif;
+        box-shadow: 0 4px 12px rgba(0,0,0,.2);
+      }
+      .txn-tooltip-box::after {
+        content: '';
+        position: absolute;
+        top: 100%; left: 50%; transform: translateX(-50%);
+        border: 5px solid transparent;
+        border-top-color: #1f2937;
+      }
+      .txn-tooltip-wrap:hover .txn-tooltip-box {
+        visibility: visible; opacity: 1;
+      }
+      /* Edit icon button */
+      .edit-btn {
+        display: inline-flex; align-items: center; justify-content: center;
+        width: 26px; height: 26px; border-radius: 6px; border: none;
+        background: transparent; cursor: pointer; color: #9ca3af;
+        transition: background .15s, color .15s; padding: 0;
+      }
+      .edit-btn:hover { background: #e0f2fe; color: #2563eb; }
+      .edit-btn svg { width: 14px; height: 14px; }
+      .row-actions { display: flex; align-items: center; gap: 4px; }
+    `;
+    document.head.appendChild(style);
+  })();
+
+  // ── Inject Add/Edit Transaction modal HTML (once) ─────────────────────
   function injectModalHTML() {
     if (document.getElementById('txn-modal')) return;
 
@@ -121,7 +188,7 @@ window.__categoryCache = [];
     modal.innerHTML = `
       <div class="txn-dialog">
         <button id="modal-close-x" class="close-x" type="button">&times;</button>
-        <h3>Add Transaction</h3>
+        <h3 id="modal-title">Add Transaction</h3>
         <form id="txn-form" novalidate>
 
           <div id="txn-balance-bar" style="margin-bottom:12px;display:none;">
@@ -155,6 +222,11 @@ window.__categoryCache = [];
             <div id="category-list" class="category-list"
                  aria-live="polite" role="list" style="margin-top:8px;"></div>
             <span id="category-error" class="errorspan"></span>
+          </div>
+
+          <div class="txn-row">
+            <label for="txn-reason">Reason <span style="color:#9ca3af;font-weight:400;">(optional)</span></label>
+            <input id="txn-reason" type="text" placeholder="e.g. Spotify subscription, Breakfast, Movie tickets" />
           </div>
 
           <div class="txn-row">
@@ -193,21 +265,61 @@ window.__categoryCache = [];
   }
 
   // ── Append a new row to the table ────────────────────────────────
-  function appendRowToTable({ id, date, category, amount, account, type }) {
+  function appendRowToTable({ id, date, category, amount, account, type, reason }) {
     const table = document.getElementById('txTable');
     if (!table) return;
     const tbody = table.querySelector('tbody') || table.appendChild(document.createElement('tbody'));
     const tr = document.createElement('tr');
     tr.setAttribute('data-type', type);
+    tr.setAttribute('data-id', id);
+    tr.setAttribute('data-reason', reason || '');
     const sign = type === 'income' ? '+' : '\u2212';
-    tr.innerHTML = `
-      <td>${date}</td>
-      <td>${category}</td>
+    tr.innerHTML = buildRowHTML({ id, date, category, amount, account, type, reason, sign });
+    tbody.prepend(tr);
+  }
+
+  function buildRowHTML({ id, date, category, amount, account, type, reason, sign }) {
+    const displayDate = formatDateDisplay(date);
+    const infoIcon = reason
+      ? `<span class="txn-tooltip-wrap">
+           <i class="txn-info-icon">i</i>
+           <span class="txn-tooltip-box">Reason: ${escHtml(reason)}</span>
+         </span>`
+      : '';
+
+    return `
+      <td>${displayDate}</td>
+      <td>
+        <div class="row-actions">
+          <button class="edit-btn" data-id="${id}" title="Edit transaction" aria-label="Edit transaction">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+            </svg>
+          </button>
+          ${infoIcon}
+          <span>${escHtml(category)}</span>
+        </div>
+      </td>
       <td><span class="amount-cell">${sign}${Number(amount).toFixed(2)}</span></td>
       <td>${account.charAt(0).toUpperCase() + account.slice(1)}</td>
       <td class="select-cell"><input type="checkbox" class="row-checkbox" data-id="${id}"></td>
     `;
-    tbody.prepend(tr);
+  }
+
+  function formatDateDisplay(dateStr) {
+    // dateStr is YYYY-MM-DD from the server
+    const [y, m, d] = dateStr.split('-');
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    return `${parseInt(d)} ${months[parseInt(m)-1]} ${y}`;
+  }
+
+  function escHtml(str) {
+    return String(str || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
   }
 
   // ── Category helpers ─────────────────────────────────────────────
@@ -220,8 +332,8 @@ window.__categoryCache = [];
       window.__categoryCache = data.map(c => ({ id: c.id, name: c.name }));
     } catch {
       const cats = new Set();
-      document.querySelectorAll('#txTable tbody tr td:nth-child(2)')
-              .forEach(td => cats.add(td.textContent.trim()));
+      document.querySelectorAll('#txTable tbody tr td:nth-child(2) span:last-child')
+              .forEach(span => cats.add(span.textContent.trim()));
       window.__categoryCache = Array.from(cats).map(name => ({ id: name, name }));
     }
     renderCategoryList();
@@ -319,12 +431,14 @@ window.__categoryCache = [];
     const modal = document.getElementById('txn-modal');
     if (!modal) return;
 
-    // Reset
+    // Reset to "add" mode
+    document.getElementById('modal-title').textContent    = 'Add Transaction';
     document.getElementById('amount').value               = '';
     document.getElementById('date').value                 = new Date().toISOString().slice(0, 10);
     document.getElementById('account').value              = '';
     document.getElementById('selected-category-id').value = '';
     document.getElementById('new-category-name').value    = '';
+    document.getElementById('txn-reason').value           = '';
     ['amount-error','category-error','account-error','date-error','form-message'].forEach(id => {
       const el = document.getElementById(id);
       if (el) { el.textContent = ''; el.style.color = ''; }
@@ -333,7 +447,6 @@ window.__categoryCache = [];
     modal.setAttribute('aria-hidden', 'false');
     await loadCategoriesToSelect();
 
-    // Fetch balances for live balance display
     let balances = {};
     try {
       const r = await fetch(API.balances);
@@ -341,6 +454,71 @@ window.__categoryCache = [];
     } catch { /* ignore */ }
 
     let currentType = 'expense';
+    setupModalLogic(modal, currentType, balances, null);
+  }
+
+  // ── Open "Edit Transaction" modal ─────────────────────────────────
+  async function openEditModal(txnId) {
+    injectModalHTML();
+    const modal = document.getElementById('txn-modal');
+    if (!modal) return;
+
+    // Get data from the row
+    const row = document.querySelector(`tr[data-id="${txnId}"]`);
+    if (!row) return;
+
+    modal.setAttribute('aria-hidden', 'false');
+    await loadCategoriesToSelect();
+
+    // Pre-fill from the row data attributes or cells
+    document.getElementById('modal-title').textContent = 'Edit Transaction';
+
+    // Read current values from the row
+    const cells = row.querySelectorAll('td');
+    // cells: 0=date, 1=category(with actions), 2=amount, 3=account, 4=checkbox
+    const rawDate = row.getAttribute('data-date') || '';
+    const rawReason = row.getAttribute('data-reason') || '';
+
+    // Parse amount from the cell (strip sign and formatting)
+    const amountCell = cells[2]?.querySelector('.amount-cell');
+    const rawAmount = amountCell ? amountCell.textContent.replace(/[+−\u2212,]/g, '').trim() : '';
+
+    // Determine type from row
+    const rowType = row.getAttribute('data-type') || 'expense';
+
+    // Find category id from name
+    const catNameEl = cells[1]?.querySelector('span:last-child');
+    const catName = catNameEl ? catNameEl.textContent.trim() : '';
+    const catObj = (window.__categoryCache || []).find(c => c.name === catName);
+    const catId = catObj ? String(catObj.id) : '';
+
+    const accountRaw = cells[3]?.textContent.trim().toLowerCase() || '';
+
+    // Fill fields
+    document.getElementById('amount').value    = rawAmount;
+    document.getElementById('date').value      = rawDate;
+    document.getElementById('account').value   = accountRaw;
+    document.getElementById('txn-reason').value = rawReason;
+    document.getElementById('new-category-name').value = '';
+    if (catId) setSelectedCategory(catId);
+
+    ['amount-error','category-error','account-error','date-error','form-message'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) { el.textContent = ''; el.style.color = ''; }
+    });
+
+    let balances = {};
+    try {
+      const r = await fetch(API.balances);
+      if (r.ok) balances = await r.json();
+    } catch { /* ignore */ }
+
+    setupModalLogic(modal, rowType, balances, txnId);
+  }
+
+  // ── Shared modal logic (add vs edit) ─────────────────────────────
+  function setupModalLogic(modal, initialType, balances, editingId) {
+    let currentType = initialType;
 
     function updateBalanceBar() {
       const bar        = document.getElementById('txn-balance-bar');
@@ -348,7 +526,6 @@ window.__categoryCache = [];
       const val        = document.getElementById('txn-balance-val');
       const accountSel = document.getElementById('account');
       if (!bar || !accountSel) return;
-
       const selectedAcc = accountSel.value;
       if (currentType === 'expense' && selectedAcc && balances[selectedAcc] !== undefined) {
         const bal = balances[selectedAcc];
@@ -372,11 +549,8 @@ window.__categoryCache = [];
     }
     updateTypeUI();
 
-    // Wire account select to update balance bar on change
     const accountSel = document.getElementById('account');
-    if (accountSel) {
-      accountSel.onchange = updateBalanceBar;
-    }
+    if (accountSel) accountSel.onchange = updateBalanceBar;
 
     function rebind(id, handler) {
       const old = document.getElementById(id);
@@ -408,7 +582,7 @@ window.__categoryCache = [];
       } finally { this.disabled = false; }
     });
 
-    rebind('submit-txn', async function () {
+    const submitBtn = rebind('submit-txn', async function () {
       ['amount-error','category-error','account-error','date-error','form-message'].forEach(id => {
         const el = document.getElementById(id);
         if (el) { el.textContent = ''; el.style.color = ''; }
@@ -418,6 +592,7 @@ window.__categoryCache = [];
       const category = document.getElementById('selected-category-id').value;
       const account  = document.getElementById('account').value;
       const date     = document.getElementById('date').value;
+      const reason   = (document.getElementById('txn-reason').value || '').trim();
 
       let valid = true;
       if (!Number.isFinite(amount) || amount <= 0) {
@@ -438,10 +613,19 @@ window.__categoryCache = [];
       this.textContent = 'Saving\u2026';
 
       try {
-        const resp = await fetch(API.transactions, {
-          method: 'POST',
+        let url, method;
+        if (editingId) {
+          url    = API.editTxn(editingId);
+          method = 'POST';
+        } else {
+          url    = API.transactions;
+          method = 'POST';
+        }
+
+        const resp = await fetch(url, {
+          method,
           headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
-          body: JSON.stringify({ amount, category, account, date, type: currentType })
+          body: JSON.stringify({ amount, category, account, date, type: currentType, reason })
         });
         const data = await resp.json();
         if (resp.ok) {
@@ -455,9 +639,15 @@ window.__categoryCache = [];
         const msg = document.getElementById('form-message');
         if (msg) { msg.style.color = 'red'; msg.textContent = err.message; }
         const btn = document.getElementById('submit-txn');
-        if (btn) { btn.disabled = false; btn.textContent = 'Add'; }
+        if (btn) { btn.disabled = false; btn.textContent = editingId ? 'Save' : 'Add'; }
       }
     });
+
+    // Update submit button label for edit mode
+    if (editingId) {
+      const btn = document.getElementById('submit-txn');
+      if (btn) btn.textContent = 'Save';
+    }
   }
 
   // ── Transfer modal helpers ────────────────────────────────────────
@@ -469,7 +659,6 @@ window.__categoryCache = [];
   async function openTransferModal() {
     const modal = document.getElementById('transfer-modal');
     if (!modal) return;
-
     ['t-from','t-to','t-amount'].forEach(id => {
       const el = document.getElementById(id);
       if (el) el.value = '';
@@ -480,7 +669,6 @@ window.__categoryCache = [];
       const el = document.getElementById(id);
       if (el) { el.textContent = ''; el.style.color = ''; }
     });
-
     modal.setAttribute('aria-hidden', 'false');
     await refreshTransferBalances();
   }
@@ -491,7 +679,6 @@ window.__categoryCache = [];
     const savingsEl = document.getElementById('t-savings-balance');
     const els = [cashEl, bankEl, savingsEl].filter(Boolean);
     els.forEach(el => el.textContent = '…');
-
     try {
       const r = await fetch(API.balances);
       if (!r.ok) throw new Error();
@@ -576,6 +763,15 @@ window.__categoryCache = [];
           btn.disabled  = n === 0;
           btn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentColor" d="M9 3v1H4v2h16V4h-5V3H9zm2 6v7h2V9h-2zM7 9v7h2V9H7zm8 0v7h2V9h-2z"/></svg> ${n > 0 ? 'Delete (' + n + ')' : 'Delete'}`;
         }
+      }
+    });
+
+    // Edit button delegation inside table
+    txTable.addEventListener('click', e => {
+      const editBtn = e.target.closest('.edit-btn');
+      if (editBtn) {
+        const txnId = editBtn.getAttribute('data-id');
+        if (txnId) openEditModal(txnId);
       }
     });
   }
