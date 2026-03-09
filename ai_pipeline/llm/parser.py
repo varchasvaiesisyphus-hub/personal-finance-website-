@@ -1,28 +1,12 @@
 """
 ai_pipeline/llm/parser.py
-
-Parses and validates the raw text returned by the LLM.
-
-Strategy:
-1. Try json.loads(text) directly — works when the model is well-behaved.
-2. If that fails, scan for the first balanced '{...}' substring and retry.
-   This handles models that prepend/append stray text despite instructions.
-3. Validate the parsed object against RESPONSE_SCHEMA using jsonschema.
-4. Raise ValueError with a clear message on any failure.
+BUG 8 FIX: Strip markdown fences before parsing (Gemini sometimes wraps in ```json).
 """
-
 from __future__ import annotations
-
-import json
-import logging
-
+import json, logging, re
 import jsonschema
 
 logger = logging.getLogger(__name__)
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Validation schema
-# ─────────────────────────────────────────────────────────────────────────────
 
 RESPONSE_SCHEMA: dict = {
     "type": "object",
@@ -34,27 +18,15 @@ RESPONSE_SCHEMA: dict = {
             "minItems": 1,
             "items": {
                 "type": "object",
-                "required": [
-                    "action",
-                    "explanation",
-                    "estimated_monthly_saving_in_inr",
-                    "confidence",
-                    "next_step",
-                    "tags",
-                ],
+                "required": ["action", "explanation", "estimated_monthly_saving_in_inr", "confidence", "next_step", "tags"],
                 "additionalProperties": False,
                 "properties": {
-                    "action": {"type": "string"},
-                    "explanation": {"type": "string"},
-                    "estimated_monthly_saving_in_inr": {
-                        "oneOf": [{"type": "number"}, {"type": "null"}]
-                    },
-                    "confidence": {"type": "string", "enum": ["high", "medium", "low"]},
-                    "next_step": {"type": "string"},
-                    "tags": {
-                        "type": "array",
-                        "items": {"type": "string"},
-                    },
+                    "action":                          {"type": "string"},
+                    "explanation":                     {"type": "string"},
+                    "estimated_monthly_saving_in_inr": {"oneOf": [{"type": "number"}, {"type": "null"}]},
+                    "confidence":                      {"type": "string", "enum": ["high", "medium", "low"]},
+                    "next_step":                       {"type": "string"},
+                    "tags":                            {"type": "array", "items": {"type": "string"}},
                 },
             },
         }
@@ -62,25 +34,20 @@ RESPONSE_SCHEMA: dict = {
 }
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Helpers
-# ─────────────────────────────────────────────────────────────────────────────
+def _strip_markdown(text: str) -> str:
+    """BUG 8 FIX: Remove ```json ... ``` or ``` ... ``` fences Gemini sometimes adds."""
+    text = re.sub(r"```json\s*", "", text)
+    text = re.sub(r"```\s*",     "", text)
+    return text.strip()
+
 
 def _extract_first_json_object(text: str) -> str:
-    """
-    Extract the first balanced '{...}' substring from *text*.
-
-    Walks character-by-character tracking brace depth.
-    Returns the substring (including braces) or raises ValueError if none found.
-    """
     start = text.find("{")
     if start == -1:
-        raise ValueError("No '{' found in LLM response — cannot extract JSON object.")
-
+        raise ValueError("No '{' found in LLM response.")
     depth = 0
     in_string = False
     escape_next = False
-
     for i, ch in enumerate(text[start:], start=start):
         if escape_next:
             escape_next = False
@@ -98,55 +65,40 @@ def _extract_first_json_object(text: str) -> str:
         elif ch == "}":
             depth -= 1
             if depth == 0:
-                return text[start : i + 1]
+                return text[start: i + 1]
+    raise ValueError("Unbalanced braces in LLM response.")
 
-    raise ValueError("Unbalanced braces in LLM response — could not extract JSON object.")
-
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Public API
-# ─────────────────────────────────────────────────────────────────────────────
 
 def parse_llm_response(text: str) -> dict:
-    """
-    Parse and validate the raw LLM response text.
-
-    Args:
-        text: Raw string returned by the adapter's generate() method.
-
-    Returns:
-        Validated dict with key "suggestions" (list of suggestion dicts).
-
-    Raises:
-        ValueError: If the text cannot be parsed as JSON or fails schema validation.
-    """
     logger.debug("LLM response preview: %s", text[:300])
 
-    # Step 1 — optimistic direct parse
+    # BUG 8 FIX: strip markdown before any JSON parsing attempt
+    text = _strip_markdown(text)
+
     parsed: dict | None = None
+
+    # Step 1: direct parse
     try:
         parsed = json.loads(text.strip())
     except json.JSONDecodeError:
         pass
 
-    # Step 2 — fallback: extract first balanced JSON object
+    # Step 2: extract balanced JSON object
     if parsed is None:
         try:
             candidate = _extract_first_json_object(text)
             parsed = json.loads(candidate)
         except (ValueError, json.JSONDecodeError) as exc:
             raise ValueError(
-                f"Could not parse a JSON object from LLM response. "
-                f"Response preview: {text[:300]!r}"
+                f"Could not parse JSON from LLM response. Preview: {text[:300]!r}"
             ) from exc
 
-    # Step 3 — schema validation
+    # Step 3: schema validation
     try:
         jsonschema.validate(instance=parsed, schema=RESPONSE_SCHEMA)
     except jsonschema.ValidationError as exc:
         raise ValueError(
-            f"LLM response failed schema validation: {exc.message}. "
-            f"Path: {list(exc.absolute_path)}"
+            f"LLM response failed schema validation: {exc.message}. Path: {list(exc.absolute_path)}"
         ) from exc
 
     return parsed

@@ -37,6 +37,25 @@ def _fmt_monthly(qs):
     return [{'month': str(r['month'])[:7], 'total': float(r['total'])} for r in qs]
 
 
+# FIX #4: Map the period token sent by the Accounts page JS (7d, 30d, 1m, 6m, 1y)
+# to a concrete cutoff date.  Previously _six_months_ago() was always used, so the
+# period pills in the UI (7D / 30D / 1M / 6M / 1Y) had no effect on the chart data.
+def _cutoff_for_period(period: str) -> datetime.date:
+    today = datetime.date.today()
+    period = (period or "6m").lower().strip()
+    if period == "7d":
+        return today - datetime.timedelta(days=7)
+    if period == "30d":
+        return today - datetime.timedelta(days=30)
+    if period == "1m":
+        # Calendar month boundary
+        return (today.replace(day=1) - datetime.timedelta(days=1)).replace(day=1)
+    if period == "1y":
+        return (today.replace(day=1) - datetime.timedelta(days=364)).replace(day=1)
+    # Default / "6m"
+    return _six_months_ago()
+
+
 @login_required
 def home(request):
     transactions = Transaction.objects.filter(user=request.user).order_by('-date', '-created_at')
@@ -280,8 +299,13 @@ def api_account_summary(request, account):
     if account not in ('cash', 'bank', 'savings'):
         return JsonResponse({'message': 'Unknown account'}, status=400)
 
-    user   = request.user
-    cutoff = _six_months_ago()
+    user = request.user
+
+    # FIX #4: Read the ?period= query param sent by the Accounts page JS.
+    # Before this fix, _six_months_ago() was always used so the 7D / 30D / 1M /
+    # 1Y period pills had no effect — they all showed the same 6-month chart.
+    period = request.GET.get('period', '6m')
+    cutoff = _cutoff_for_period(period)
 
     inflow  = Transaction.objects.filter(user=user, account=account, type='income')\
                                   .aggregate(t=Sum('amount'))['t'] or 0

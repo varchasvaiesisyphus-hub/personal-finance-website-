@@ -17,6 +17,8 @@ import re
 os.environ.setdefault("LLM_PROVIDER", "mock")
 
 from django.contrib.auth.models import User
+from django.core.cache import cache
+from django.db.models.signals import post_delete, post_save
 from django.test import TestCase, override_settings
 
 from ai_pipeline.llm.llm_adapter import MockAdapter
@@ -51,6 +53,7 @@ def _make_transaction(
         amount=amount,
         type=txn_type,
         date=date,
+        account="cash",
     )
 
 
@@ -198,16 +201,25 @@ class TestParser(TestCase):
 class TestPromptBuilder(TestCase):
 
     def test_build_prompt_contains_payload(self):
-        payload = {"user_id": 1, "metrics": {}, "meta": {"days": 90}}
+        """Prompt must contain the structured financial summary header and
+        the JSON-only instruction — both are always present in the template."""
+        payload = {"metrics": {}, "start_date": "2025-01-01", "end_date": "2025-03-31"}
         prompt = build_prompt(payload)
-        self.assertIn("user_id", prompt)
-        self.assertIn("ONLY return valid JSON", prompt)
+        self.assertIn("FINANCIAL SUMMARY", prompt)
+        self.assertIn("RESPOND WITH VALID JSON ONLY", prompt)
 
     def test_build_prompt_compact_json(self):
-        """Compact separators — no spaces after colons in the embedded JSON."""
-        payload = {"k": "v"}
+        """Category breakdown amounts must appear in the prompt when supplied."""
+        payload = {
+            "metrics": {
+                "total_income": 10000,
+                "total_expense": 6000,
+                "category_breakdown": {"Groceries": 3000, "Transport": 1500},
+            }
+        }
         prompt = build_prompt(payload)
-        self.assertIn('"k":"v"', prompt)
+        self.assertIn("Groceries", prompt)
+        self.assertIn("Transport", prompt)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -221,11 +233,37 @@ class TestGenerateInsightsIntegration(TestCase):
     def setUp(self):
         os.environ["LLM_PROVIDER"] = "mock"
         self.user = _make_user("insightuser")
+
+        # FIX #3: Disconnect the post_save / post_delete signals while running
+        # these tests so that creating test transactions does NOT spawn background
+        # threads that call generate_insights_for_user concurrently.  Without this
+        # disconnect the background thread can (a) create AIInsight rows between
+        # setUp() and the assertion, corrupting count checks, and (b) set the
+        # garvis_hash cache before the test body runs, causing subsequent calls to
+        # return {"status": "skipped"} instead of generating rows.
+        from core.signals import transaction_saved, transaction_deleted
+        post_save.disconnect(transaction_saved, sender=Transaction)
+        post_delete.disconnect(transaction_deleted, sender=Transaction)
+
         cat = _make_category(self.user, "Groceries")
         # Create a few transactions so prepare_user_payload has data
         _make_transaction(self.user, cat, 1200.0, "expense", "2025-01-10")
-        _make_transaction(self.user, cat, 950.0, "expense", "2025-02-10")
-        _make_transaction(self.user, cat, 200.0, "income", "2025-02-15")
+        _make_transaction(self.user, cat, 950.0,  "expense", "2025-02-10")
+        _make_transaction(self.user, cat, 200.0,  "income",  "2025-02-15")
+
+        # FIX #2: Clear the per-user hash cache so every test starts clean.
+        # The LocMemCache is NOT reset between test methods (unlike the DB which
+        # is wrapped in a transaction), so a cache entry set by one test method
+        # would cause the next method's generate_insights_for_user call to be
+        # skipped as "data unchanged", silently breaking count assertions.
+        cache.delete(f"garvis_hash_{self.user.pk}")
+        cache.delete(f"garvis_insights_{self.user.pk}")
+
+    def tearDown(self):
+        # Re-connect signals so other test classes are not affected.
+        from core.signals import transaction_saved, transaction_deleted
+        post_save.connect(transaction_saved, sender=Transaction)
+        post_delete.connect(transaction_deleted, sender=Transaction)
 
     def test_returns_ok_status(self):
         from ai_pipeline.insights import generate_insights_for_user
@@ -292,10 +330,18 @@ class TestGenerateInsightsIntegration(TestCase):
         self.assertEqual(AIInsight.objects.filter(user=self.user).count(), 0)
 
     def test_idempotent_multiple_calls(self):
-        """Each call creates new rows (no upsert) — caller decides dedup strategy."""
+        """Each call with fresh cache must create new rows (no upsert)."""
         from ai_pipeline.insights import generate_insights_for_user
+
         generate_insights_for_user(self.user.pk)
         count1 = AIInsight.objects.filter(user=self.user).count()
+
+        # FIX #2: The hash cache is populated after the first call.  Without
+        # clearing it the second call would short-circuit and return
+        # {"status": "skipped"}, making count2 == count1 and failing the
+        # assertGreater below.  Clearing the cache forces a genuine second run.
+        cache.delete(f"garvis_hash_{self.user.pk}")
+
         generate_insights_for_user(self.user.pk)
         count2 = AIInsight.objects.filter(user=self.user).count()
         self.assertGreater(count2, count1)

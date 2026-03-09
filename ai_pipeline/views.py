@@ -67,13 +67,27 @@ def api_latest_insights(request):
                 request.user.pk, result.get("status"),
             )
             if result.get("status") == "ok":
-                # Re-query so the freshly-saved rows are returned
+                # Re-query so the freshly-saved rows are returned.
                 insights = list(
                     AIInsight.objects
                     .filter(user=request.user)
                     .exclude(action="draft_pipeline_output")
                     .order_by("-created_at")[:3]
                 )
+            # FIX #7: If the pipeline was skipped (data unchanged / hash cache hit)
+            # but there are genuinely no rows in the DB (e.g. they were deleted
+            # manually), do NOT cache the empty list.  Caching it would cause every
+            # subsequent request within the 30-second window to return [] even though
+            # insights could be regenerated on the next cold request.
+            # We simply fall through with an empty insights list and skip the cache
+            # set below so the next request retries the DB query fresh.
+            elif result.get("status") in ("skipped", "disabled"):
+                data = [_insight_to_dict(i) for i in insights]  # still []
+                # Only cache if disabled (AI intentionally off); skip caching for
+                # "skipped" so a subsequent request can retry once the hash expires.
+                if result.get("status") == "disabled":
+                    cache.set(cache_key, data, _CACHE_TTL)
+                return JsonResponse({"insights": data})
         except Exception as exc:
             logger.error(
                 "On-demand insight generation failed for user %s: %s",
@@ -81,7 +95,9 @@ def api_latest_insights(request):
             )
 
     data = [_insight_to_dict(i) for i in insights]
-    cache.set(cache_key, data, _CACHE_TTL)
+    # Only cache a non-empty result so we never permanently serve stale empty data.
+    if data:
+        cache.set(cache_key, data, _CACHE_TTL)
     return JsonResponse({"insights": data})
 
 
