@@ -1,7 +1,17 @@
 """
 ai_pipeline/llm/llm_adapter.py
-BUG 9 FIX: GeminiAdapter added with thinkingConfig INSIDE generationConfig.
-BUG 1 FIX: get_adapter() is in insights.py — this file just exports GeminiAdapter.
+
+BUG 9 FIX:  GeminiAdapter added with thinkingConfig INSIDE generationConfig.
+BUG 1 FIX:  get_adapter() is in insights.py — this file just exports GeminiAdapter.
+BUG 11 FIX: GeminiAdapter now skips thought parts (Gemini 2.5+ thinking output).
+
+Gemini 2.5 Flash (and Pro) return thinking tokens as a separate part in the
+response with {"thought": True} before the actual answer part.  The old code
+blindly took parts[0]["text"], which is the raw internal monologue — full of
+partial JSON fragments and unbalanced braces — causing parse_llm_response to
+crash with "Unbalanced braces in LLM response."
+
+Fix: iterate parts, skip any with thought=True, use the first real text part.
 """
 from __future__ import annotations
 import json, logging, os
@@ -98,8 +108,6 @@ class ClaudeAdapter:
 
 
 # ── GeminiAdapter ─────────────────────────────────────────────────────────────
-# BUG 9 FIX: thinkingConfig must be INSIDE generationConfig, not top-level.
-# BUG 1 FIX: This class now exists so insights.py can import it.
 
 _GEMINI_DEFAULT_MODEL   = "gemini-2.0-flash"
 _GEMINI_API_BASE        = "https://generativelanguage.googleapis.com/v1beta/models"
@@ -128,9 +136,9 @@ class GeminiAdapter:
             body = {
                 "contents": [{"parts": [{"text": prompt}]}],
                 "generationConfig": {
-                    "temperature":    temperature,
+                    "temperature":     temperature,
                     "maxOutputTokens": max_tokens,
-                    # BUG 9 FIX: thinkingConfig INSIDE generationConfig, not top-level
+                    # thinkingConfig must be INSIDE generationConfig (BUG 9 FIX)
                     "thinkingConfig": {"thinkingBudget": 0},
                 },
             }
@@ -143,9 +151,21 @@ class GeminiAdapter:
             response.raise_for_status()
             data = response.json()
 
-            # Extract text from Gemini response structure
+            # BUG 11 FIX: Gemini 2.5+ returns thinking tokens as a separate part
+            # with {"thought": True} BEFORE the actual answer part.
+            # The old code took parts[0]["text"] unconditionally, which is the raw
+            # internal monologue — full of partial JSON and unbalanced braces —
+            # causing parse_llm_response to crash with "Unbalanced braces".
+            # Fix: skip all thought parts, take the first real text part.
             try:
-                text = data["candidates"][0]["content"]["parts"][0]["text"]
+                parts = data["candidates"][0]["content"]["parts"]
+                text = None
+                for part in parts:
+                    if not part.get("thought", False):
+                        text = part.get("text", "")
+                        break
+                if text is None:
+                    raise ValueError("No non-thought part found in Gemini response.")
             except (KeyError, IndexError) as exc:
                 raise ValueError(f"Unexpected Gemini response structure: {data}") from exc
 

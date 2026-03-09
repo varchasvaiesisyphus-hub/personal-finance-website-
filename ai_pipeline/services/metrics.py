@@ -4,6 +4,12 @@ ai_pipeline/services/metrics.py
 Fetch transactions for a user over a date window and compute aggregates.
 Transfer transactions (category name == 'Transfer') are excluded from all
 expense calculations to avoid double-counting.
+
+BUG 1 FIX: _is_transfer() now lowercases the category name before comparing,
+consistent with orchestrator.py. Previously it used a case-sensitive
+`== "Transfer"` check, so categories named "transfer" or "TRANSFER" would
+leak into expense totals while being excluded from reason_breakdown in the
+orchestrator — producing inconsistent data fed to the LLM prompt.
 """
 
 from __future__ import annotations
@@ -37,10 +43,15 @@ def _month_key(d: date) -> str:
 
 
 def _is_transfer(tx: Transaction) -> bool:
-    """Return True if this transaction is a Transfer and should be excluded from expenses."""
+    """Return True if this transaction is a Transfer and should be excluded from expenses.
+
+    BUG 1 FIX: compare lowercase so 'transfer', 'Transfer', and 'TRANSFER' are all caught,
+    matching the same normalisation used in orchestrator._is_transfer().
+    """
     cat = getattr(tx, "category", None)
-    cat_name = str(getattr(cat, "name", "")) if cat is not None else ""
-    return cat_name == "Transfer"
+    # BUG 1 FIX: was `str(getattr(cat, "name", "")) == "Transfer"` (case-sensitive)
+    cat_name = str(getattr(cat, "name", "") if cat is not None else "").lower()
+    return cat_name == "transfer"
 
 
 def compute_metrics(

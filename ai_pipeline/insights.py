@@ -1,8 +1,3 @@
-"""
-ai_pipeline/insights.py
-BUG 1 FIX: GeminiAdapter added to get_adapter() import and routing.
-BUG 2 FIX: LLM_MAX_TOKENS default changed from 400 to 8000.
-"""
 from __future__ import annotations
 import hashlib, json, logging, os
 from django.contrib.auth.models import User
@@ -19,7 +14,7 @@ def get_adapter():
     if provider == "claude":
         return ClaudeAdapter()
     if provider == "gemini":
-        return GeminiAdapter()   # BUG 1 FIX
+        return GeminiAdapter()
     if provider == "openai":
         return OpenAIAdapter()
     return MockAdapter()
@@ -39,6 +34,28 @@ def _sanitise_suggestion(raw: dict) -> dict:
         "next_step":                raw["next_step"][:_MAX_NEXT_STEP_LEN],
         "tags":                     raw.get("tags", []),
     }
+
+
+def _make_payload_hash(payload: dict) -> str:
+    """
+    BUG 10 FIX: Include the active LLM provider and model in the hash so that
+    changing LLM_PROVIDER invalidates the dedup cache and forces a fresh LLM call.
+
+    Previously only the transaction payload was hashed. This meant that:
+      1. Run with LLM_PROVIDER=mock  → mock insights saved, hash cached 6 hours.
+      2. Switch to LLM_PROVIDER=gemini → same payload → same hash → cache hit →
+         "skipped" → old mock rows served forever by the view.
+    """
+    provider = os.environ.get("LLM_PROVIDER", "mock").lower().strip()
+    model    = os.environ.get("LLM_MODEL", "").strip()
+    hash_input = {
+        "payload":  payload,
+        "provider": provider,  # BUG 10 FIX: was omitted
+        "model":    model,     # BUG 10 FIX: was omitted
+    }
+    return hashlib.md5(
+        json.dumps(hash_input, sort_keys=True, default=str).encode()
+    ).hexdigest()
 
 
 def generate_insights_for_user(user_id: int) -> dict:
@@ -61,8 +78,8 @@ def generate_insights_for_user(user_id: int) -> dict:
     from ai_pipeline.services.orchestrator import prepare_user_payload
     payload = prepare_user_payload(user, days=days)
 
-    # Skip LLM if data hasn't changed
-    payload_hash   = hashlib.md5(json.dumps(payload, sort_keys=True, default=str).encode()).hexdigest()
+    # Skip LLM if data AND provider/model haven't changed (BUG 10 FIX)
+    payload_hash   = _make_payload_hash(payload)
     hash_cache_key = f"garvis_hash_{user_id}"
     if cache.get(hash_cache_key) == payload_hash:
         logger.info("Payload unchanged for user %s — skipping LLM call.", user_id)

@@ -13,16 +13,21 @@ produce a meaningful baseline.  For small groups a simple ratio test is used
 (``RATIO_THRESHOLD`` × median).
 
 Only *expense* transactions are analysed.
+
+BUG 2 FIX: Removed _detect_for_group() which was dead code — detect_anomalies()
+never called it and duplicated the logic inline.  Worse, the function's docstring
+claimed it returned (z_score, mad_score, method) but it actually returned
+(mean, (stdev, median, mad), "stat"), so any future caller would silently receive
+wrong values.  The inline duplication in detect_anomalies() is correct and is kept.
 """
 
 from __future__ import annotations
 
 import logging
-import math
 import statistics
 from collections import defaultdict
 from datetime import date
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 from core.models import Transaction
 
@@ -67,24 +72,10 @@ def _mad_zscore(value: float, median: float, mad: float) -> float:
     return abs(0.6745 * (value - median) / mad)
 
 
-def _detect_for_group(
-    amounts: List[float],
-) -> tuple[Optional[float], Optional[float], str]:
-    """
-    Return (z_score, mad_score, method) for the given amount list.
-    'method' indicates which baseline was applied.
-    """
-    n = len(amounts)
-    if n < MIN_SAMPLES:
-        return None, None, "ratio"
-
-    mean = statistics.mean(amounts)
-    stdev = statistics.pstdev(amounts)  # population stdev
-    median = statistics.median(amounts)
-    deviations = [abs(a - median) for a in amounts]
-    mad = statistics.median(deviations)
-
-    return mean, (stdev, median, mad), "stat"
+# NOTE: _detect_for_group() was removed in BUG 2 FIX.
+# It was never called by detect_anomalies() (the logic is inlined below),
+# and its return signature was wrong: docstring said (z_score, mad_score, method)
+# but the implementation returned (mean, (stdev, median, mad), method).
 
 
 # ──────────────────────────────────────────────────────────────────────────────
