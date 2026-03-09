@@ -9,10 +9,11 @@ from __future__ import annotations
 import json
 
 from django.contrib.auth.models import User
+from django.db.models.signals import post_delete, post_save
 from django.test import Client, TestCase
-from django.urls import reverse
 
 from ai_pipeline.models import AIInsight
+from core.models import Transaction
 
 
 def _make_user(username: str, password: str = "pass1234") -> User:
@@ -34,13 +35,24 @@ def _make_insight(user: User, action: str = "Test action", confidence: str = "me
 class TestLatestInsightsEndpoint(TestCase):
 
     def setUp(self):
+        # Disconnect signals so that any Transaction rows created elsewhere
+        # don't spawn background threads that write AIInsight rows and pollute
+        # these assertions.
+        from core.signals import transaction_saved, transaction_deleted
+        post_save.disconnect(transaction_saved, sender=Transaction)
+        post_delete.disconnect(transaction_deleted, sender=Transaction)
+
         self.user = _make_user("alice")
         self.other = _make_user("bob")
         self.client = Client()
 
+    def tearDown(self):
+        from core.signals import transaction_saved, transaction_deleted
+        post_save.connect(transaction_saved, sender=Transaction)
+        post_delete.connect(transaction_deleted, sender=Transaction)
+
     def test_requires_authentication(self):
         response = self.client.get("/api/ai/insights/latest/")
-        # Redirects to login
         self.assertIn(response.status_code, (302, 401, 403))
 
     def test_returns_only_own_insights(self):
@@ -95,9 +107,18 @@ class TestLatestInsightsEndpoint(TestCase):
 class TestFeedbackEndpoint(TestCase):
 
     def setUp(self):
+        from core.signals import transaction_saved, transaction_deleted
+        post_save.disconnect(transaction_saved, sender=Transaction)
+        post_delete.disconnect(transaction_deleted, sender=Transaction)
+
         self.user = _make_user("carol")
         self.other = _make_user("dave")
         self.client = Client()
+
+    def tearDown(self):
+        from core.signals import transaction_saved, transaction_deleted
+        post_save.connect(transaction_saved, sender=Transaction)
+        post_delete.connect(transaction_deleted, sender=Transaction)
 
     def test_requires_authentication(self):
         insight = _make_insight(self.user)
